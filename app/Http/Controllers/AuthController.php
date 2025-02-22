@@ -9,43 +9,65 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Kreait\Firebase\Auth as FirebaseAuth;
+use Kreait\Firebase\Exception\FirebaseException;
 
 class AuthController extends Controller
 {
-    protected $firebaseAuth;
+    protected $firebaseAuth = null;
 
-    public function __construct(FirebaseAuth $firebaseAuth)
+    public function __construct()
     {
-        $this->firebaseAuth = $firebaseAuth;
+        try {
+            if (config('firebase.credentials.project_id')) {
+                $this->firebaseAuth = app(FirebaseAuth::class);
+            }
+        } catch (FirebaseException $e) {
+            // Firebase is not configured, continue without it
+            $this->firebaseAuth = null;
+        }
+    }
+
+    /**
+     * Show the admin login form.
+     */
+    public function showLoginForm()
+    {
+        return view('auth.login'); // Adjust the view path as necessary
     }
 
     /**
      * Admin login
      */
-    public function adminLogin(Request $request)
+    public function login(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return view('auth.login');
+        }
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->except('password'));
         }
 
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid login credentials'
-            ], 401);
+            return redirect()->back()
+                ->withErrors(['email' => 'Invalid login credentials'])
+                ->withInput($request->except('password'));
         }
 
         $user = Auth::user();
         
         if (!$user->isAdmin()) {
             Auth::logout();
-            return response()->json([
-                'message' => 'Unauthorized access'
-            ], 403);
+            return redirect()->back()
+                ->withErrors(['email' => 'Unauthorized access'])
+                ->withInput($request->except('password'));
         }
 
         // Log the login
@@ -56,12 +78,7 @@ class AuthController extends Controller
             'login_at' => now(),
         ]);
 
-        $token = $user->createToken('admin-token')->plainTextToken;
-
-        return response()->json([
-            'token' => $token,
-            'user' => $user
-        ]);
+        return redirect()->route('admin.dashboard');
     }
 
     /**
@@ -79,7 +96,13 @@ class AuthController extends Controller
 
         try {
             // Send OTP via Firebase
-            $verification = $this->firebaseAuth->signInWithPhoneNumber($request->phone_number);
+            if (config('firebase.credentials')) {
+                $verification = $this->firebaseAuth->signInWithPhoneNumber($request->phone_number);
+            } else {
+                return response()->json([
+                    'message' => 'Firebase configuration is missing.'
+                ], 500);
+            }
             
             return response()->json([
                 'verification_id' => $verification->verificationId(),
@@ -109,8 +132,14 @@ class AuthController extends Controller
         }
 
         try {
-            // Verify OTP with Firebase
-            $this->firebaseAuth->verifyIdToken($request->verification_id);
+            // Verify OTP with Firebase if configured
+            if ($this->firebaseAuth) {
+                $this->firebaseAuth->verifyIdToken($request->verification_id);
+            } else {
+                return response()->json([
+                    'message' => 'Firebase configuration is missing.'
+                ], 500);
+            }
 
             // Find or create user
             $user = User::where('phone_number', $request->phone_number)
@@ -150,12 +179,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $user = $request->user();
-        $user->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'Successfully logged out'
-        ]);
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect()->route('login')->with('success', 'Successfully logged out');
     }
 
     /**
@@ -202,5 +230,13 @@ class AuthController extends Controller
             'message' => 'Profile updated successfully',
             'user' => $user
         ]);
+    }
+
+    /**
+     * Show the admin dashboard.
+     */
+    public function dashboard()
+    {
+        return view('admin.dashboard');
     }
 }
