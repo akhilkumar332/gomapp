@@ -3,25 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
         'phone_number',
-        'role'
+        'role',
+        'is_online',
+        'last_ping'
     ];
 
     /**
@@ -42,30 +45,20 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'role' => 'string'
+        'is_online' => 'boolean',
+        'last_ping' => 'datetime'
     ];
 
     /**
-     * Get the zones assigned to this driver.
+     * Get the zones assigned to the user.
      */
     public function zones()
     {
-        return $this->belongsToMany(Zone::class, 'driver_zones', 'driver_id', 'zone_id')
-                    ->when($this->isDriver(), function ($query) {
-                        return $query->where('status', 'active');
-                    });
+        return $this->belongsToMany(Zone::class, 'driver_zones');
     }
 
     /**
-     * Get the login logs for this user.
-     */
-    public function loginLogs()
-    {
-        return $this->hasMany(LoginLog::class);
-    }
-
-    /**
-     * Get the activity logs for this user.
+     * Get the activity logs for the user.
      */
     public function activityLogs()
     {
@@ -73,7 +66,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is an admin
+     * Get the login logs for the user.
+     */
+    public function loginLogs()
+    {
+        return $this->hasMany(LoginLog::class);
+    }
+
+    /**
+     * Check if user is admin
      */
     public function isAdmin(): bool
     {
@@ -81,7 +82,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is a driver
+     * Check if user is driver
      */
     public function isDriver(): bool
     {
