@@ -29,4 +29,24 @@ class LoginLog extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get device type from user agent
+     */
+    public static function getDeviceType(?string $userAgent): string
+    {
+        if (empty($userAgent)) {
+            return 'unknown';
+        }
+
+        $userAgent = strtolower($userAgent);
+
+        if (str_contains($userAgent, 'mobile') || str_contains($userAgent, 'android') || str_contains($userAgent, 'iphone')) {
+            return 'mobile';
+        } elseif (str_contains($userAgent, 'tablet') || str_contains($userAgent, 'ipad')) {
+            return 'tablet';
+        }
+
+        return 'desktop';
+    }
 }
