@@ -74,8 +74,9 @@ class AuthController extends Controller
         LoginLog::create([
             'user_id' => $user->id,
             'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'login_at' => now(),
+            'device_info' => $request->userAgent() ?? 'Unknown Device',
+            'location' => 'Unknown',
+            'country' => 'Unknown',
         ]);
 
         return redirect()->route('admin.dashboard');
@@ -156,8 +157,9 @@ class AuthController extends Controller
             LoginLog::create([
                 'user_id' => $user->id,
                 'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'login_at' => now(),
+                'device_info' => $request->userAgent() ?? 'Unknown Device',
+                'location' => 'Unknown',
+                'country' => 'Unknown',
             ]);
 
             $token = $user->createToken('driver-token')->plainTextToken;
@@ -238,5 +240,45 @@ class AuthController extends Controller
     public function dashboard()
     {
         return view('admin.dashboard');
+    }
+
+    /**
+     * Show user profile
+     */
+    public function showProfile()
+    {
+        $user = auth()->user();
+        return view('admin.profile', compact('user'));
+    }
+
+    /**
+     * Show driver dashboard
+     */
+    public function driverDashboard()
+    {
+        return view('driver.dashboard');
+    }
+
+    /**
+     * Update user password
+     */
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = auth()->user();
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return back()->withErrors(['current_password' => 'The provided password does not match your current password.']);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }

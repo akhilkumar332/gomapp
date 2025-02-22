@@ -16,8 +16,12 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->user() || !auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
+
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->route('login')->with('error', 'Unauthorized access. Admin privileges required.');
         }
 
         return $next($request);

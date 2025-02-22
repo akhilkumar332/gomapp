@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PaymentController;
@@ -21,14 +22,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/', function () {
         return redirect()->route('login');
     });
+});
 
-    // Authentication Routes
-    Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [AuthController::class, 'login']);
+// Authentication Routes
+Route::controller(AuthController::class)->group(function () {
+    Route::get('login', 'showLoginForm')->name('login');
+    Route::post('login', 'login');
+    Route::post('logout', 'logout')->name('logout')->middleware('auth');
 });
 
 // Admin Routes
-Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
+Route::middleware(['web', 'auth', \App\Http\Middleware\AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [AuthController::class, 'dashboard'])->name('dashboard');
 
@@ -42,6 +46,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::post('locations/bulk-delete', [LocationController::class, 'bulkDelete'])->name('locations.bulk-delete');
     Route::post('locations/import', [LocationController::class, 'import'])->name('locations.import');
     Route::get('locations/export', [LocationController::class, 'export'])->name('locations.export');
+
+    // Driver Management
+    Route::resource('drivers', DriverController::class);
+    Route::post('drivers/bulk-delete', [DriverController::class, 'bulkDelete'])->name('drivers.bulk-delete');
+    Route::post('drivers/import', [DriverController::class, 'import'])->name('drivers.import');
+    Route::get('drivers/export', [DriverController::class, 'export'])->name('drivers.export');
 
     // Payment Management
     Route::resource('payments', PaymentController::class);
@@ -64,18 +74,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 
     // Reports & Analytics
     Route::prefix('reports')->name('reports.')->group(function () {
-        // Reports Dashboard
         Route::get('/', [ReportsController::class, 'index'])->name('index');
-
-        // Driver Activity Reports
         Route::get('driver-activity', [ReportsController::class, 'driverActivity'])->name('driver-activity');
         Route::get('driver-activity/export', [ReportsController::class, 'exportDriverActivity'])->name('driver-activity.export');
-
-        // Zone Statistics
         Route::get('zone-statistics', [ReportsController::class, 'zoneStatistics'])->name('zone-statistics');
         Route::get('zone-statistics/export', [ReportsController::class, 'exportZoneStatistics'])->name('zone-statistics.export');
-
-        // System Usage Reports
         Route::get('system-usage', [ReportsController::class, 'systemUsage'])->name('system-usage');
         Route::get('system-usage/export', [ReportsController::class, 'exportSystemUsage'])->name('system-usage.export');
     });
@@ -87,16 +90,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 });
 
 // Driver Routes
-Route::prefix('driver')->middleware(['auth', 'driver'])->name('driver.')->group(function () {
+Route::prefix('driver')->middleware(['auth', \App\Http\Middleware\DriverMiddleware::class])->name('driver.')->group(function () {
     Route::get('/', [AuthController::class, 'driverDashboard'])->name('dashboard');
     Route::get('profile', [AuthController::class, 'showProfile'])->name('profile');
     Route::post('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
-});
-
-// Shared Routes
-Route::middleware('auth')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 // Fallback Route

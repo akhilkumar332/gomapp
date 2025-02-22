@@ -6,6 +6,7 @@ use App\Models\Zone;
 use App\Models\Location;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class LocationController extends Controller
@@ -69,19 +70,27 @@ class LocationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $location = Location::create($validator->validated());
+        try {
+            DB::beginTransaction();
 
-        // Log the activity
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'create',
-            'description' => "Created new location: {$location->shop_name}",
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent()
-        ]);
+            $location = Location::create($validator->validated());
 
-        return redirect()->route('admin.locations.index')
-            ->with('success', 'Location created successfully.');
+            // Log the activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'create',
+                'description' => "Created new location: {$location->shop_name}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+
+            DB::commit();
+            return redirect()->route('admin.locations.index')
+                ->with('success', 'Location created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to create location. Please try again.')->withInput();
+        }
     }
 
     /**
@@ -113,19 +122,27 @@ class LocationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $location->update($validator->validated());
+        try {
+            DB::beginTransaction();
 
-        // Log the activity
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'update',
-            'description' => "Updated location: {$location->shop_name}",
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent()
-        ]);
+            $location->update($validator->validated());
 
-        return redirect()->route('admin.locations.index')
-            ->with('success', 'Location updated successfully.');
+            // Log the activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'update',
+                'description' => "Updated location: {$location->shop_name}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+
+            DB::commit();
+            return redirect()->route('admin.locations.index')
+                ->with('success', 'Location updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to update location. Please try again.')->withInput();
+        }
     }
 
     /**
@@ -133,20 +150,32 @@ class LocationController extends Controller
      */
     public function destroy(Request $request, Location $location)
     {
-        $locationName = $location->shop_name;
-        $location->delete();
+        try {
+            DB::beginTransaction();
 
-        // Log the activity
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'delete',
-            'description' => "Deleted location: {$locationName}",
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent()
-        ]);
+            // Store location name for activity log
+            $locationName = $location->shop_name;
 
-        return redirect()->route('admin.locations.index')
-            ->with('success', 'Location deleted successfully.');
+            // Delete the location
+            $location->delete();
+
+            // Log the activity
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'delete',
+                'description' => "Deleted location: {$locationName}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+
+            DB::commit();
+            return redirect()->route('admin.locations.index')
+                ->with('success', 'Location deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to delete location. Please try again.');
+        }
     }
 
     /**
