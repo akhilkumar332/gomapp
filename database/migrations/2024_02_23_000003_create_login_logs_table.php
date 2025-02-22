@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('login_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('ip_address');
-            $table->string('device_info');
-            $table->string('location')->nullable();
-            $table->string('country')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->text('user_agent')->nullable();
+            $table->timestamp('login_at')->useCurrent();
+            $table->json('location_data')->nullable();
             $table->timestamps();
         });
     }
