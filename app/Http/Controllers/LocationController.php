@@ -12,13 +12,27 @@ use Illuminate\Support\Facades\Validator;
 class LocationController extends Controller
 {
     /**
+     * Create activity log entry
+     */
+    private function logActivity(string $action, string $description, Request $request): void
+    {
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'description' => $description,
+            'device_type' => ActivityLog::getDeviceType($request->userAgent()),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent()
+        ]);
+    }
+
+    /**
      * Display a listing of the locations.
      */
     public function index(Request $request)
     {
         $query = Location::with(['zone']);
 
-        // Apply filters
         if ($request->zone_id) {
             $query->where('zone_id', $request->zone_id);
         }
@@ -75,21 +89,16 @@ class LocationController extends Controller
 
             $location = Location::create($validator->validated());
 
-            // Log the activity
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'create',
-                'description' => "Created new location: {$location->shop_name}",
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ]);
+            $this->logActivity('create_location', "Created new location: {$location->shop_name}", $request);
 
             DB::commit();
             return redirect()->route('admin.locations.index')
                 ->with('success', 'Location created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to create location. Please try again.')->withInput();
+            return redirect()->back()
+                ->with('error', 'Failed to create location. Please try again.')
+                ->withInput();
         }
     }
 
@@ -127,21 +136,16 @@ class LocationController extends Controller
 
             $location->update($validator->validated());
 
-            // Log the activity
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'update',
-                'description' => "Updated location: {$location->shop_name}",
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ]);
+            $this->logActivity('update_location', "Updated location: {$location->shop_name}", $request);
 
             DB::commit();
             return redirect()->route('admin.locations.index')
                 ->with('success', 'Location updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to update location. Please try again.')->withInput();
+            return redirect()->back()
+                ->with('error', 'Failed to update location. Please try again.')
+                ->withInput();
         }
     }
 
@@ -153,20 +157,10 @@ class LocationController extends Controller
         try {
             DB::beginTransaction();
 
-            // Store location name for activity log
             $locationName = $location->shop_name;
-
-            // Delete the location
             $location->delete();
 
-            // Log the activity
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'delete',
-                'description' => "Deleted location: {$locationName}",
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ]);
+            $this->logActivity('delete_location', "Deleted location: {$locationName}", $request);
 
             DB::commit();
             return redirect()->route('admin.locations.index')

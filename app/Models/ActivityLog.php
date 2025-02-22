@@ -17,17 +17,10 @@ class ActivityLog extends Model
     protected $fillable = [
         'user_id',
         'action',
+        'description',
         'device_type',
-        'details'
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'details' => 'array'
+        'ip_address',
+        'user_agent'
     ];
 
     /**
@@ -42,17 +35,44 @@ class ActivityLog extends Model
      * Log a new activity
      *
      * @param string $action
-     * @param array $details
+     * @param string $description
      * @param string|null $deviceType
      * @return static
      */
-    public static function log(string $action, array $details = [], ?string $deviceType = null)
+    public static function log(string $action, string $description, ?string $deviceType = null)
     {
+        $request = request();
+        
         return static::create([
             'user_id' => auth()->id(),
             'action' => $action,
+            'description' => $description,
             'device_type' => $deviceType ?? 'web',
-            'details' => $details
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent()
         ]);
+    }
+
+    /**
+     * Get device type from user agent
+     *
+     * @param string|null $userAgent
+     * @return string
+     */
+    public static function getDeviceType(?string $userAgent): string
+    {
+        if (empty($userAgent)) {
+            return 'unknown';
+        }
+
+        $userAgent = strtolower($userAgent);
+
+        if (str_contains($userAgent, 'mobile') || str_contains($userAgent, 'android') || str_contains($userAgent, 'iphone')) {
+            return 'mobile';
+        } elseif (str_contains($userAgent, 'tablet') || str_contains($userAgent, 'ipad')) {
+            return 'tablet';
+        }
+
+        return 'desktop';
     }
 }
