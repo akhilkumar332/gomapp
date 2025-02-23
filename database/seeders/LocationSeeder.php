@@ -3,6 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Location;
+use App\Models\Zone;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class LocationSeeder extends Seeder
@@ -12,65 +15,43 @@ class LocationSeeder extends Seeder
      */
     public function run(): void
     {
-        // Locations for Zone 1
-        $zone1Locations = [
-            [
-                'shop_name' => 'Shop 1',
-                'address' => 'Address 1, Accra',
-                'ghana_post_gps_code' => 'GG-739-9069',
-                'latitude' => 5.6037,
-                'longitude' => -0.1870,
-                'contact_number' => '+233200000001',
-                'status' => 'active'
-            ],
-            [
-                'shop_name' => 'Shop 2',
-                'address' => 'Address 2, Accra',
-                'ghana_post_gps_code' => 'GA-492-8024',
-                'latitude' => 5.6057,
-                'longitude' => -0.1890,
-                'contact_number' => '+233200000002',
-                'status' => 'active'
-            ],
-            [
-                'shop_name' => 'Shop 3',
-                'address' => 'Address 3, Accra',
-                'ghana_post_gps_code' => 'GA-123-4567',
-                'latitude' => 5.6077,
-                'longitude' => -0.1910,
-                'contact_number' => '+233200000003',
-                'status' => 'active'
-            ]
-        ];
+        $zones = Zone::all();
+        $drivers = User::where('role', 'driver')->get();
 
-        foreach ($zone1Locations as $location) {
-            Location::create(array_merge($location, ['zone_id' => 1]));
-        }
+        foreach ($zones as $zone) {
+            // Create 5-8 locations per zone
+            $numLocations = rand(5, 8);
+            
+            for ($i = 0; $i < $numLocations; $i++) {
+                $status = rand(0, 1) ? 'completed' : 'active';
+                $completed = $status === 'completed';
+                $driver = $drivers->random();
+                
+                $location = [
+                    'zone_id' => $zone->id,
+                    'shop_name' => 'Shop ' . fake()->company(),
+                    'address' => fake()->address(),
+                    'ghana_post_gps_code' => 'GA-' . rand(100, 999) . '-' . rand(1000, 9999),
+                    'latitude' => fake()->latitude(5.55, 5.70),
+                    'longitude' => fake()->longitude(-0.25, -0.15),
+                    'contact_number' => '020' . rand(1000000, 9999999),
+                    'status' => $status,
+                    'priority' => rand(1, 5),
+                ];
 
-        // Locations for Zone 2
-        $zone2Locations = [
-            [
-                'shop_name' => 'Shop 4',
-                'address' => 'Address 4, Tema',
-                'ghana_post_gps_code' => 'GT-234-5678',
-                'latitude' => 5.7037,
-                'longitude' => -0.2870,
-                'contact_number' => '+233200000004',
-                'status' => 'active'
-            ],
-            [
-                'shop_name' => 'Shop 5',
-                'address' => 'Address 5, Tema',
-                'ghana_post_gps_code' => 'GT-345-6789',
-                'latitude' => 5.7057,
-                'longitude' => -0.2890,
-                'contact_number' => '+233200000005',
-                'status' => 'active'
-            ]
-        ];
+                if ($completed) {
+                    $completedAt = Carbon::now()->subHours(rand(1, 72));
+                    $location = array_merge($location, [
+                        'started_at' => $completedAt->copy()->subMinutes(rand(15, 120)),
+                        'completed_at' => $completedAt,
+                        'completed_by' => $driver->id,
+                        'payment_received' => rand(0, 1),
+                        'payment_amount_received' => rand(50, 500),
+                    ]);
+                }
 
-        foreach ($zone2Locations as $location) {
-            Location::create(array_merge($location, ['zone_id' => 2]));
+                Location::create($location);
+            }
         }
     }
 }

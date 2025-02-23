@@ -8,6 +8,7 @@ use App\Models\Location;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -20,16 +21,18 @@ class DashboardController extends Controller
         $totalZones = Zone::count();
 
         // Get active drivers (drivers who have updated their location in the last hour)
+        $oneHourAgo = Carbon::now()->subHour()->format('Y-m-d H:i:s');
         $activeDrivers = User::where('role', 'driver')
             ->whereNotNull('last_location_update')
-            ->where('last_location_update', '>=', now()->subHour())
+            ->whereRaw("datetime(last_location_update) >= datetime(?)", [$oneHourAgo])
             ->count();
 
         // Get total locations
         $totalLocations = Location::count();
 
         // Get today's collections
-        $todayCollections = Location::whereDate('completed_at', today())
+        $today = Carbon::today()->format('Y-m-d');
+        $todayCollections = Location::whereRaw("date(completed_at) = ?", [$today])
             ->where('status', 'completed')
             ->where('payment_received', true)
             ->sum('payment_amount_received');
@@ -74,8 +77,9 @@ class DashboardController extends Controller
             ->get();
 
         // Get today's collections
+        $today = Carbon::today()->format('Y-m-d');
         $todayCollections = Location::where('completed_by', $driver->id)
-            ->whereDate('completed_at', today())
+            ->whereRaw("date(completed_at) = ?", [$today])
             ->where('status', 'completed')
             ->where('payment_received', true)
             ->sum('payment_amount_received');
@@ -110,12 +114,14 @@ class DashboardController extends Controller
      */
     private function getDeliverySuccessRate()
     {
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
+        
         $totalDeliveries = Location::whereNotNull('completed_at')
-            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
             ->count();
 
         $successfulDeliveries = Location::where('status', 'completed')
-            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
             ->count();
 
         return $totalDeliveries > 0 
@@ -128,12 +134,13 @@ class DashboardController extends Controller
      */
     private function getAverageDeliveryTime()
     {
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
+        
         return Location::where('status', 'completed')
-            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
             ->whereNotNull('started_at')
             ->select(DB::raw('AVG(CAST((julianday(completed_at) - julianday(started_at)) * 24 * 60 AS INTEGER)) as avg_time'))
-            ->first()
-            ->avg_time ?? 0;
+            ->value('avg_time') ?? 0;
     }
 
     /**
@@ -141,10 +148,12 @@ class DashboardController extends Controller
      */
     private function getCollectionsByZone()
     {
-        return Zone::with(['locations' => function ($query) {
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
+        
+        return Zone::with(['locations' => function ($query) use ($thirtyDaysAgo) {
             $query->where('status', 'completed')
                 ->where('payment_received', true)
-                ->whereDate('completed_at', '>=', now()->subDays(30));
+                ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo]);
         }])
         ->get()
         ->map(function ($zone) {
@@ -162,23 +171,27 @@ class DashboardController extends Controller
      */
     private function getDriverPerformance()
     {
-        return User::where('role', 'driver')
-            ->withCount(['completedLocations' => function ($query) {
-                $query->whereDate('completed_at', '>=', now()->subDays(30));
-            }])
-            ->withSum(['completedLocations' => function ($query) {
-                $query->whereDate('completed_at', '>=', now()->subDays(30))
-                    ->where('payment_received', true);
-            }], 'payment_amount_received')
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
+        
+        $drivers = User::where('role', 'driver')
+            ->select('users.*')
+            ->selectRaw('COUNT(DISTINCT locations.id) as completed_locations_count')
+            ->selectRaw('SUM(CASE WHEN locations.payment_received = 1 THEN locations.payment_amount_received ELSE 0 END) as total_collections')
+            ->leftJoin('locations', function ($join) use ($thirtyDaysAgo) {
+                $join->on('users.id', '=', 'locations.completed_by')
+                    ->whereRaw("date(locations.completed_at) >= ?", [$thirtyDaysAgo]);
+            })
+            ->groupBy('users.id')
             ->having('completed_locations_count', '>', 0)
-            ->get()
-            ->map(function ($driver) {
-                return [
-                    'id' => $driver->id,
-                    'name' => $driver->name,
-                    'completed_deliveries' => $driver->completed_locations_count,
-                    'total_collections' => $driver->completed_locations_sum_payment_amount_received,
-                ];
-            });
+            ->get();
+
+        return $drivers->map(function ($driver) {
+            return [
+                'id' => $driver->id,
+                'name' => $driver->name,
+                'completed_deliveries' => $driver->completed_locations_count,
+                'total_collections' => $driver->total_collections,
+            ];
+        });
     }
 }
