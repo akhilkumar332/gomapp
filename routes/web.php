@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\DriverMiddleware;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,12 +23,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Admin Routes
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 });
 
 // Driver Routes
-Route::middleware(['auth', 'driver'])->group(function () {
+Route::middleware(['auth', DriverMiddleware::class])->group(function () {
     Route::get('/driver/dashboard', [DashboardController::class, 'driverDashboard'])->name('driver.dashboard');
 });
 
