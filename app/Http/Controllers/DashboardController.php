@@ -5,135 +5,180 @@ namespace App\Http\Controllers;
 use App\Models\Zone;
 use App\Models\User;
 use App\Models\Location;
-use App\Models\Payment;
 use App\Models\ActivityLog;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     /**
-     * Display the admin dashboard.
+     * Show the admin dashboard.
      */
     public function index()
     {
-        // Get quick stats
+        // Get total zones
         $totalZones = Zone::count();
+
+        // Get active drivers (drivers who have updated their location in the last hour)
         $activeDrivers = User::where('role', 'driver')
-            ->where('status', 'active')
+            ->whereNotNull('last_location_update')
+            ->where('last_location_update', '>=', now()->subHour())
             ->count();
+
+        // Get total locations
         $totalLocations = Location::count();
-        $todayPayments = Payment::whereDate('created_at', Carbon::today())
-            ->sum('amount');
+
+        // Get today's collections
+        $todayCollections = Location::whereDate('completed_at', today())
+            ->where('status', 'completed')
+            ->where('payment_received', true)
+            ->sum('payment_amount_received');
 
         // Get recent activities
         $recentActivities = ActivityLog::with('user')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->latest()
+            ->take(10)
             ->get();
 
-        // Get activity data for chart (last 7 days)
-        $activityData = $this->getActivityChartData();
-
-        // Get report counts
-        $driverActivityCount = ActivityLog::whereHas('user', function($query) {
-            $query->where('role', 'driver');
-        })->count();
-
-        $zoneStatisticsCount = Zone::count();
-
-        $systemUsageCount = DB::table('login_logs')->count();
-
-        // Get server health metrics (cached for 5 minutes)
-        $serverHealth = Cache::remember('server_health', 300, function () {
-            return $this->getServerHealth();
-        });
+        // Get performance metrics
+        $performanceMetrics = [
+            'delivery_success_rate' => $this->getDeliverySuccessRate(),
+            'average_delivery_time' => $this->getAverageDeliveryTime(),
+            'collections_by_zone' => $this->getCollectionsByZone(),
+            'driver_performance' => $this->getDriverPerformance(),
+        ];
 
         return view('admin.dashboard', compact(
             'totalZones',
             'activeDrivers',
             'totalLocations',
-            'todayPayments',
+            'todayCollections',
             'recentActivities',
-            'activityData',
-            'driverActivityCount',
-            'zoneStatisticsCount',
-            'systemUsageCount',
-            'serverHealth'
+            'performanceMetrics'
         ));
     }
 
     /**
-     * Get activity data for the chart.
+     * Show the driver dashboard.
      */
-    private function getActivityChartData()
+    public function driverDashboard(Request $request)
     {
-        $activities = ActivityLog::select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
-            ->whereDate('created_at', '>=', Carbon::now()->subDays(7))
-            ->groupBy('date')
-            ->orderBy('date')
+        $driver = $request->user();
+
+        // Get assigned zones
+        $zones = $driver->zones()
+            ->with(['locations' => function ($query) {
+                $query->whereNull('completed_at')
+                    ->orderBy('priority', 'desc');
+            }])
             ->get();
 
-        return [
-            'labels' => $activities->pluck('date')->map(function($date) {
-                return Carbon::parse($date)->format('M d');
-            }),
-            'values' => $activities->pluck('count')
+        // Get today's collections
+        $todayCollections = Location::where('completed_by', $driver->id)
+            ->whereDate('completed_at', today())
+            ->where('status', 'completed')
+            ->where('payment_received', true)
+            ->sum('payment_amount_received');
+
+        // Get recent activities
+        $recentActivities = ActivityLog::where('user_id', $driver->id)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // Get performance metrics
+        $performanceMetrics = [
+            'total_deliveries' => Location::where('completed_by', $driver->id)->count(),
+            'successful_deliveries' => Location::where('completed_by', $driver->id)
+                ->where('status', 'completed')
+                ->count(),
+            'total_collections' => Location::where('completed_by', $driver->id)
+                ->where('payment_received', true)
+                ->sum('payment_amount_received'),
         ];
+
+        return view('driver.dashboard', compact(
+            'zones',
+            'todayCollections',
+            'recentActivities',
+            'performanceMetrics'
+        ));
     }
 
     /**
-     * Get server health metrics.
+     * Calculate delivery success rate
      */
-    private function getServerHealth()
+    private function getDeliverySuccessRate()
     {
-        // CPU Usage
-        $cpuUsage = sys_getloadavg()[0] * 100 / cpu_count();
+        $totalDeliveries = Location::whereNotNull('completed_at')
+            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->count();
 
-        // Memory Usage
-        $memoryTotal = memory_get_total();
-        $memoryFree = memory_get_free();
-        $memoryUsage = ($memoryTotal - $memoryFree) / $memoryTotal * 100;
+        $successfulDeliveries = Location::where('status', 'completed')
+            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->count();
 
-        // Disk Usage
-        $diskTotal = disk_total_space('/');
-        $diskFree = disk_free_space('/');
-        $diskUsage = ($diskTotal - $diskFree) / $diskTotal * 100;
-
-        return [
-            'cpu_usage' => round($cpuUsage, 2),
-            'memory_usage' => round($memoryUsage, 2),
-            'disk_usage' => round($diskUsage, 2),
-            'last_checked' => Carbon::now()
-        ];
+        return $totalDeliveries > 0 
+            ? round(($successfulDeliveries / $totalDeliveries) * 100, 2)
+            : 0;
     }
 
     /**
-     * Get total memory in bytes.
+     * Calculate average delivery time
      */
-    private function memory_get_total()
+    private function getAverageDeliveryTime()
     {
-        $meminfo = file_get_contents('/proc/meminfo');
-        preg_match('/MemTotal:\s+(\d+)\skB/', $meminfo, $matches);
-        return $matches[1] * 1024;
+        return Location::where('status', 'completed')
+            ->whereDate('completed_at', '>=', now()->subDays(30))
+            ->whereNotNull('started_at')
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, started_at, completed_at)) as avg_time'))
+            ->first()
+            ->avg_time ?? 0;
     }
 
     /**
-     * Get free memory in bytes.
+     * Get collections by zone
      */
-    private function memory_get_free()
+    private function getCollectionsByZone()
     {
-        $meminfo = file_get_contents('/proc/meminfo');
-        preg_match('/MemFree:\s+(\d+)\skB/', $meminfo, $matches);
-        return $matches[1] * 1024;
+        return Zone::with(['locations' => function ($query) {
+            $query->where('status', 'completed')
+                ->where('payment_received', true)
+                ->whereDate('completed_at', '>=', now()->subDays(30));
+        }])
+        ->get()
+        ->map(function ($zone) {
+            return [
+                'id' => $zone->id,
+                'name' => $zone->name,
+                'total_collections' => $zone->locations->sum('payment_amount_received'),
+                'locations_count' => $zone->locations->count(),
+            ];
+        });
     }
 
     /**
-     * Get number of CPU cores.
+     * Get driver performance metrics
      */
-    private function cpu_count()
+    private function getDriverPerformance()
     {
-        return (int) shell_exec('nproc');
+        return User::where('role', 'driver')
+            ->withCount(['completedLocations' => function ($query) {
+                $query->whereDate('completed_at', '>=', now()->subDays(30));
+            }])
+            ->withSum(['completedLocations' => function ($query) {
+                $query->whereDate('completed_at', '>=', now()->subDays(30))
+                    ->where('payment_received', true);
+            }], 'payment_amount_received')
+            ->having('completed_locations_count', '>', 0)
+            ->get()
+            ->map(function ($driver) {
+                return [
+                    'id' => $driver->id,
+                    'name' => $driver->name,
+                    'completed_deliveries' => $driver->completed_locations_count,
+                    'total_collections' => $driver->completed_locations_sum_payment_amount_received,
+                ];
+            });
     }
 }

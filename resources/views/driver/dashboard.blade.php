@@ -1,281 +1,100 @@
-@extends('layouts.driver')
+<x-app-layout>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="text-sm font-medium text-gray-500">Total Deliveries</div>
+                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $performanceMetrics['total_deliveries'] }}</div>
+                    </div>
+                </div>
 
-@section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h3 mb-0 text-gray-800">Driver Dashboard</h1>
-        </div>
-    </div>
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="text-sm font-medium text-gray-500">Successful Deliveries</div>
+                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $performanceMetrics['successful_deliveries'] }}</div>
+                    </div>
+                </div>
 
-    <!-- Stats Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar avatar-sm">
-                                <span class="avatar-title bg-primary-subtle rounded">
-                                    <i class='bx bx-map text-primary fs-4'></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">Today's Deliveries</h6>
-                            <h2 class="mb-0">{{ $todayDeliveries }}</h2>
-                        </div>
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="text-sm font-medium text-gray-500">Today's Collections</div>
+                        <div class="mt-1 text-3xl font-semibold text-gray-900">₵{{ number_format($todayCollections, 2) }}</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar avatar-sm">
-                                <span class="avatar-title bg-success-subtle rounded">
-                                    <i class='bx bx-money text-success fs-4'></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">Today's Collections</h6>
-                            <h2 class="mb-0">₵{{ number_format($todayCollections, 2) }}</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar avatar-sm">
-                                <span class="avatar-title bg-info-subtle rounded">
-                                    <i class='bx bx-check-circle text-info fs-4'></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">Success Rate</h6>
-                            <h2 class="mb-0">{{ $successRate }}%</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar avatar-sm">
-                                <span class="avatar-title bg-warning-subtle rounded">
-                                    <i class='bx bx-map-pin text-warning fs-4'></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">Assigned Zones</h6>
-                            <h2 class="mb-0">{{ $assignedZonesCount }}</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Performance Chart -->
-        <div class="col-xl-8 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Delivery Performance</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="performanceChart" height="300"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="col-xl-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Activity</h5>
-                    <a href="{{ route('driver.activity') }}" class="btn btn-sm btn-primary">View All</a>
-                </div>
-                <div class="card-body">
-                    <div class="activity-timeline">
-                        @forelse($recentActivities as $activity)
-                            <div class="activity-item pb-3 mb-3 border-bottom">
-                                <div class="d-flex align-items-start">
-                                    <div class="activity-indicator me-3">
-                                        <div class="avatar avatar-xs">
-                                            <span class="avatar-title rounded-circle bg-primary-subtle text-primary">
-                                                <i class='bx bx-check'></i>
-                                            </span>
-                                        </div>
+            <!-- Assigned Zones -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Zones</h3>
+                    <div class="space-y-4">
+                        @foreach($zones as $zone)
+                            <div class="border rounded-lg p-4">
+                                <h4 class="text-lg font-medium text-gray-900">{{ $zone->name }}</h4>
+                                <p class="mt-1 text-sm text-gray-500">{{ $zone->locations->count() }} pending deliveries</p>
+                                
+                                @if($zone->locations->isNotEmpty())
+                                    <div class="mt-4 space-y-3">
+                                        @foreach($zone->locations as $location)
+                                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                                <div>
+                                                    <p class="font-medium text-gray-900">{{ $location->shop_name }}</p>
+                                                    <p class="text-sm text-gray-500">{{ $location->address }}</p>
+                                                    @if($location->payment_required)
+                                                        <p class="mt-1 text-sm font-medium text-indigo-600">
+                                                            Collection: ₵{{ number_format($location->payment_amount, 2) }}
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <a href="#" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        View Details
+                                                    </a>
+                                                    <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        Start Delivery
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                    <div class="activity-content flex-grow-1">
-                                        <p class="mb-0">{{ $activity->description }}</p>
-                                        <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                @else
+                                    <div class="mt-4 text-sm text-gray-500">No pending deliveries in this zone.</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
+                    <div class="space-y-4">
+                        @foreach($recentActivities as $activity)
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                     </div>
                                 </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {{ $activity->description }}
+                                    </p>
+                                    <p class="mt-0.5 text-sm text-gray-500">
+                                        {{ $activity->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
                             </div>
-                        @empty
-                            <p class="text-muted text-center mb-0">No recent activity</p>
-                        @endforelse
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Assigned Zones -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Assigned Zones</h5>
-                    <a href="{{ route('driver.zones') }}" class="btn btn-sm btn-primary">View All Zones</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Zone Name</th>
-                                    <th>Locations</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($assignedZones as $zone)
-                                    <tr>
-                                        <td>{{ $zone->name }}</td>
-                                        <td>{{ $zone->locations_count }} locations</td>
-                                        <td>
-                                            <span class="badge bg-{{ $zone->status === 'active' ? 'success' : 'danger' }}">
-                                                {{ ucfirst($zone->status) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('driver.zones.show', $zone) }}" class="btn btn-sm btn-primary">
-                                                View Details
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">No zones assigned</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('performanceChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {!! json_encode($performanceData['labels']) !!},
-            datasets: [
-                {
-                    label: 'Successful Deliveries',
-                    data: {!! json_encode($performanceData['success']) !!},
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    fill: true
-                },
-                {
-                    label: 'Failed Deliveries',
-                    data: {!! json_encode($performanceData['failed']) !!},
-                    borderColor: '#dc3545',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
-});
-</script>
-@endpush
-
-@push('styles')
-<style>
-.activity-timeline {
-    position: relative;
-}
-
-.activity-indicator {
-    position: relative;
-}
-
-.activity-indicator::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 100%;
-    transform: translateX(-50%);
-    width: 2px;
-    height: calc(100% - 10px);
-    background-color: #e9ecef;
-}
-
-.activity-item:last-child .activity-indicator::after {
-    display: none;
-}
-
-.avatar-sm {
-    width: 2rem;
-    height: 2rem;
-}
-
-.avatar-xs {
-    width: 1.5rem;
-    height: 1.5rem;
-}
-
-.avatar-title {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-</style>
-@endpush
+</x-app-layout>

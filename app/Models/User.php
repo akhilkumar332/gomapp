@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
@@ -23,10 +25,14 @@ class User extends Authenticatable
         'password',
         'phone_number',
         'role',
-        'firebase_uid',
+        'status',
         'phone_verified',
         'phone_verified_at',
+        'firebase_uid',
         'device_token',
+        'last_latitude',
+        'last_longitude',
+        'last_location_update',
     ];
 
     /**
@@ -47,21 +53,31 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
+        'last_location_update' => 'datetime',
         'phone_verified' => 'boolean',
         'password' => 'hashed',
     ];
 
     /**
-     * Get the zones assigned to the driver.
+     * Get the zones assigned to the user.
      */
-    public function zones()
+    public function zones(): BelongsToMany
     {
         return $this->belongsToMany(Zone::class, 'driver_zones')
             ->withTimestamps();
     }
 
     /**
-     * Check if user is admin
+     * Get the completed locations for the user.
+     */
+    public function completedLocations(): HasMany
+    {
+        return $this->hasMany(Location::class, 'completed_by')
+            ->whereNotNull('completed_at');
+    }
+
+    /**
+     * Check if the user is an admin.
      */
     public function isAdmin(): bool
     {
@@ -69,7 +85,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is driver
+     * Check if the user is a driver.
      */
     public function isDriver(): bool
     {
@@ -77,32 +93,21 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if phone is verified
+     * Check if the user has verified their phone number.
      */
     public function hasVerifiedPhone(): bool
     {
-        return $this->phone_verified;
+        return $this->phone_verified && !is_null($this->phone_verified_at);
     }
 
     /**
-     * Mark phone as verified
+     * Mark the user's phone number as verified.
      */
     public function markPhoneAsVerified(): bool
     {
-        if (!$this->phone_verified) {
-            $this->phone_verified = true;
-            $this->phone_verified_at = $this->freshTimestamp();
-            return $this->save();
-        }
-        return true;
-    }
-
-    /**
-     * Update device token
-     */
-    public function updateDeviceToken(?string $token): bool
-    {
-        $this->device_token = $token;
-        return $this->save();
+        return $this->forceFill([
+            'phone_verified' => true,
+            'phone_verified_at' => $this->freshTimestamp(),
+        ])->save();
     }
 }
