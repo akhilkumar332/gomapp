@@ -161,104 +161,7 @@
             height: 100vh;
         }
 
-        /* Form Styles */
-        .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-        }
-
-        .form-control:focus {
-            border-color: var(--first-color);
-            box-shadow: 0 0 0 0.2rem rgba(71, 35, 217, 0.1);
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #495057;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Card Styles */
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,.08);
-        }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(0,0,0,.05);
-            padding: 1.5rem;
-        }
-
-        /* Button Styles */
-        .btn {
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background-color: var(--first-color);
-            border-color: var(--first-color);
-        }
-
-        .btn-primary:hover {
-            background-color: #3b1bb3;
-            border-color: #3b1bb3;
-            transform: translateY(-1px);
-        }
-
-        /* Table Styles */
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table th {
-            border-top: none;
-            font-weight: 500;
-            padding: 1rem;
-            color: #495057;
-        }
-
-        .table td {
-            padding: 1rem;
-            vertical-align: middle;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: rgba(71, 35, 217, 0.05);
-        }
-
-        /* Badge Styles */
-        .badge {
-            padding: 0.5em 1em;
-            font-weight: 500;
-            border-radius: 6px;
-        }
-
-        /* Dropdown Styles */
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 0 20px rgba(0,0,0,.08);
-            border-radius: 8px;
-            padding: 0.5rem;
-        }
-
-        .dropdown-item {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-        }
-
-        .dropdown-item:hover {
-            background-color: rgba(71, 35, 217, 0.05);
-        }
-
-        /* Navigation Sub-items */
+        /* Sub-navigation styles */
         .nav_sub {
             padding-left: 2.5rem;
             display: none;
@@ -271,6 +174,10 @@
         .nav_sub .nav_link {
             font-size: 0.9rem;
             padding: 0.3rem 0;
+        }
+
+        .nav_item.active .nav_sub {
+            display: block;
         }
 
         @media screen and (min-width: 768px) {
@@ -341,69 +248,70 @@
                     </a>
 
                     <!-- Zones Management -->
-                    <div class="nav_item">
+                    <div class="nav_item {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
                         <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#zonesSubmenu">
                             <i class='bx bx-map nav_icon'></i>
                             <span class="nav_name">Zones</span>
                         </a>
-                        <div class="collapse nav_sub" id="zonesSubmenu">
-                            <a href="{{ route('admin.zones.index') }}" class="nav_link">All Zones</a>
-                            <a href="{{ route('admin.zones.create') }}" class="nav_link">Add Zone</a>
-                            <a href="{{ route('admin.zones.assignments') }}" class="nav_link">Driver Assignments</a>
+                        <div class="collapse nav_sub {{ request()->routeIs('admin.zones.*') ? 'show' : '' }}" id="zonesSubmenu">
+                            <a href="{{ route('admin.zones.index') }}" class="nav_link {{ request()->routeIs('admin.zones.index') ? 'active' : '' }}">All Zones</a>
+                            <a href="{{ route('admin.zones.create') }}" class="nav_link {{ request()->routeIs('admin.zones.create') ? 'active' : '' }}">Add Zone</a>
+                            <a href="{{ route('admin.zones.assignments') }}" class="nav_link {{ request()->routeIs('admin.zones.assignments') ? 'active' : '' }}">Driver Assignments</a>
                         </div>
                     </div>
 
                     <!-- Locations Management -->
-                    <div class="nav_item">
+                    <div class="nav_item {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
                         <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#locationsSubmenu">
                             <i class='bx bx-pin nav_icon'></i>
                             <span class="nav_name">Locations</span>
                         </a>
-                        <div class="collapse nav_sub" id="locationsSubmenu">
-                            <a href="{{ route('admin.locations.index') }}" class="nav_link">All Locations</a>
-                            <a href="{{ route('admin.locations.create') }}" class="nav_link">Add Location</a>
-                            <a href="{{ route('admin.locations.import') }}" class="nav_link">Import Locations</a>
+                        <div class="collapse nav_sub {{ request()->routeIs('admin.locations.*') ? 'show' : '' }}" id="locationsSubmenu">
+                            <a href="{{ route('admin.locations.index') }}" class="nav_link {{ request()->routeIs('admin.locations.index') ? 'active' : '' }}">All Locations</a>
+                            <a href="{{ route('admin.locations.create') }}" class="nav_link {{ request()->routeIs('admin.locations.create') ? 'active' : '' }}">Add Location</a>
+                            <a href="{{ route('admin.locations.import') }}" class="nav_link {{ request()->routeIs('admin.locations.import') ? 'active' : '' }}">Import Locations</a>
                         </div>
                     </div>
 
                     <!-- Drivers Management -->
-                    <div class="nav_item">
+                    <div class="nav_item {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
                         <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#driversSubmenu">
                             <i class='bx bx-user nav_icon'></i>
                             <span class="nav_name">Drivers</span>
                         </a>
-                        <div class="collapse nav_sub" id="driversSubmenu">
-                            <a href="{{ route('admin.drivers.index') }}" class="nav_link">All Drivers</a>
-                            <a href="{{ route('admin.drivers.create') }}" class="nav_link">Add Driver</a>
-                            <a href="{{ route('admin.drivers.performance') }}" class="nav_link">Performance</a>
+                        <div class="collapse nav_sub {{ request()->routeIs('admin.drivers.*') ? 'show' : '' }}" id="driversSubmenu">
+                            <a href="{{ route('admin.drivers.index') }}" class="nav_link {{ request()->routeIs('admin.drivers.index') ? 'active' : '' }}">All Drivers</a>
+                            <a href="{{ route('admin.drivers.create') }}" class="nav_link {{ request()->routeIs('admin.drivers.create') ? 'active' : '' }}">Add Driver</a>
+                            <a href="{{ route('admin.drivers.performance') }}" class="nav_link {{ request()->routeIs('admin.drivers.performance') ? 'active' : '' }}">Performance</a>
                         </div>
                     </div>
 
                     <!-- Reports & Logs -->
-                    <div class="nav_item">
-                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#logsSubmenu">
-                            <i class='bx bx-history nav_icon'></i>
+                    <div class="nav_item {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.logs.*') ? 'active' : '' }}">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#reportsSubmenu">
+                            <i class='bx bx-file nav_icon'></i>
                             <span class="nav_name">Reports & Logs</span>
                         </a>
-                        <div class="collapse nav_sub" id="logsSubmenu">
-                            <a href="{{ route('admin.activity-logs.index') }}" class="nav_link">Activity Logs</a>
-                            <a href="{{ route('admin.login-logs.index') }}" class="nav_link">Login Logs</a>
-                            <a href="{{ route('admin.reports.delivery') }}" class="nav_link">Delivery Reports</a>
-                            <a href="{{ route('admin.reports.financial') }}" class="nav_link">Financial Reports</a>
-                            <a href="{{ route('admin.reports.performance') }}" class="nav_link">Performance Reports</a>
+                        <div class="collapse nav_sub {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.logs.*') ? 'show' : '' }}" id="reportsSubmenu">
+                            <a href="{{ route('admin.reports.delivery') }}" class="nav_link {{ request()->routeIs('admin.reports.delivery') ? 'active' : '' }}">Delivery Reports</a>
+                            <a href="{{ route('admin.reports.financial') }}" class="nav_link {{ request()->routeIs('admin.reports.financial') ? 'active' : '' }}">Financial Reports</a>
+                            <a href="{{ route('admin.reports.performance') }}" class="nav_link {{ request()->routeIs('admin.reports.performance') ? 'active' : '' }}">Performance Reports</a>
+                            <a href="{{ route('admin.activity-logs.index') }}" class="nav_link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">Activity Logs</a>
+                            <a href="{{ route('admin.login-logs.index') }}" class="nav_link {{ request()->routeIs('admin.login-logs.*') ? 'active' : '' }}">Login Logs</a>
+                            <a href="{{ route('admin.error-logs.index') }}" class="nav_link {{ request()->routeIs('admin.error-logs.*') ? 'active' : '' }}">Error Logs</a>
                         </div>
                     </div>
 
                     <!-- Settings -->
-                    <div class="nav_item">
+                    <div class="nav_item {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                         <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#settingsSubmenu">
                             <i class='bx bx-cog nav_icon'></i>
                             <span class="nav_name">Settings</span>
                         </a>
-                        <div class="collapse nav_sub" id="settingsSubmenu">
-                            <a href="{{ route('admin.settings.general') }}" class="nav_link">General Settings</a>
-                            <a href="{{ route('admin.settings.notifications') }}" class="nav_link">Notifications</a>
-                            <a href="{{ route('admin.settings.api') }}" class="nav_link">API Settings</a>
+                        <div class="collapse nav_sub {{ request()->routeIs('admin.settings.*') ? 'show' : '' }}" id="settingsSubmenu">
+                            <a href="{{ route('admin.settings.general') }}" class="nav_link {{ request()->routeIs('admin.settings.general') ? 'active' : '' }}">General Settings</a>
+                            <a href="{{ route('admin.settings.notifications') }}" class="nav_link {{ request()->routeIs('admin.settings.notifications') ? 'active' : '' }}">Notifications</a>
+                            <a href="{{ route('admin.settings.api') }}" class="nav_link {{ request()->routeIs('admin.settings.api') ? 'active' : '' }}">API Settings</a>
                         </div>
                     </div>
                 </div>

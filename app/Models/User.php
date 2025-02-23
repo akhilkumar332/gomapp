@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -22,8 +23,10 @@ class User extends Authenticatable
         'password',
         'phone_number',
         'role',
-        'is_online',
-        'last_ping'
+        'firebase_uid',
+        'phone_verified',
+        'phone_verified_at',
+        'device_token',
     ];
 
     /**
@@ -43,33 +46,18 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
+        'phone_verified' => 'boolean',
         'password' => 'hashed',
-        'is_online' => 'boolean',
-        'last_ping' => 'datetime'
     ];
 
     /**
-     * Get the zones assigned to the user.
+     * Get the zones assigned to the driver.
      */
     public function zones()
     {
-        return $this->belongsToMany(Zone::class, 'driver_zones');
-    }
-
-    /**
-     * Get the activity logs for the user.
-     */
-    public function activityLogs()
-    {
-        return $this->hasMany(ActivityLog::class);
-    }
-
-    /**
-     * Get the login logs for the user.
-     */
-    public function loginLogs()
-    {
-        return $this->hasMany(LoginLog::class);
+        return $this->belongsToMany(Zone::class, 'driver_zones')
+            ->withTimestamps();
     }
 
     /**
@@ -86,5 +74,35 @@ class User extends Authenticatable
     public function isDriver(): bool
     {
         return $this->role === 'driver';
+    }
+
+    /**
+     * Check if phone is verified
+     */
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified;
+    }
+
+    /**
+     * Mark phone as verified
+     */
+    public function markPhoneAsVerified(): bool
+    {
+        if (!$this->phone_verified) {
+            $this->phone_verified = true;
+            $this->phone_verified_at = $this->freshTimestamp();
+            return $this->save();
+        }
+        return true;
+    }
+
+    /**
+     * Update device token
+     */
+    public function updateDeviceToken(?string $token): bool
+    {
+        $this->device_token = $token;
+        return $this->save();
     }
 }

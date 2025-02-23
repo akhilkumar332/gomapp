@@ -11,16 +11,16 @@ class DriverMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return mixed
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->isDriver()) {
-            return response()->json([
-                'message' => 'Unauthorized. Driver access required.'
-            ], 403);
+        if (!auth()->check() || auth()->user()->role !== 'driver') {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthorized. Driver access required.'], 403);
+            }
+            
+            return redirect()->route('login')->with('error', 'Unauthorized. Driver access required.');
         }
 
         return $next($request);
