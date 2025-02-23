@@ -63,7 +63,7 @@ class User extends Authenticatable
      */
     public function zones(): BelongsToMany
     {
-        return $this->belongsToMany(Zone::class, 'driver_zones')
+        return $this->belongsToMany(Zone::class, 'driver_zones', 'driver_id', 'zone_id')
             ->withTimestamps();
     }
 

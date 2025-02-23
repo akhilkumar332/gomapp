@@ -1,90 +1,61 @@
-@extends('layouts.admin')
-
-@section('title', 'Create Zone')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Create New Zone</h5>
-                        <a href="{{ route('admin.zones.index') }}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Zones
+<x-app-layout>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold text-gray-900">Create New Zone</h2>
+                        <a href="{{ route('admin.zones.index') }}" class="text-indigo-600 hover:text-indigo-900">
+                            Back to Zones
                         </a>
                     </div>
-                </div>
 
-                <div class="card-body">
-                    <form action="{{ route('admin.zones.store') }}" method="POST">
+                    <form action="{{ route('admin.zones.store') }}" method="POST" class="space-y-6">
                         @csrf
 
-                        <div class="mb-3">
-                            <label for="name" class="form-label required">Zone Name</label>
-                            <input type="text" 
-                                   class="form-control @error('name') is-invalid @enderror" 
-                                   id="name" 
-                                   name="name" 
-                                   value="{{ old('name') }}" 
-                                   required>
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Zone Name</label>
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control @error('description') is-invalid @enderror" 
-                                      id="description" 
-                                      name="description" 
-                                      rows="3">{{ old('description') }}</textarea>
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea name="description" id="description" rows="3"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description') }}</textarea>
                             @error('description')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="status" class="form-label required">Status</label>
-                            <select class="form-select @error('status') is-invalid @enderror" 
-                                    id="status" 
-                                    name="status" 
-                                    required>
-                                <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <div>
+                            <label for="boundaries" class="block text-sm font-medium text-gray-700">Boundaries (GeoJSON)</label>
+                            <textarea name="boundaries" id="boundaries" rows="4" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('boundaries') }}</textarea>
+                            <p class="mt-1 text-sm text-gray-500">Enter the zone boundaries in GeoJSON format</p>
+                            @error('boundaries')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                            <select name="status" id="status" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                             @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Assign Drivers</label>
-                            <div class="card">
-                                <div class="card-body">
-                                    @foreach($drivers as $driver)
-                                        <div class="form-check">
-                                            <input class="form-check-input" 
-                                                   type="checkbox" 
-                                                   name="drivers[]" 
-                                                   value="{{ $driver->id }}" 
-                                                   id="driver{{ $driver->id }}"
-                                                   {{ (is_array(old('drivers')) && in_array($driver->id, old('drivers'))) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="driver{{ $driver->id }}">
-                                                {{ $driver->name }} ({{ $driver->phone_number }})
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            @error('drivers')
-                                <div class="text-danger mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i> Create Zone
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                                Create Zone
                             </button>
                         </div>
                     </form>
@@ -92,15 +63,4 @@
             </div>
         </div>
     </div>
-</div>
-
-@push('styles')
-<style>
-    .required:after {
-        content: ' *';
-        color: red;
-    }
-</style>
-@endpush
-
-@endsection
+</x-app-layout>
