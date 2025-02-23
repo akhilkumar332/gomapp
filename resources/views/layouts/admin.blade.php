@@ -17,7 +17,7 @@
     <style>
         :root {
             --header-height: 3rem;
-            --nav-width: 68px;
+            --nav-width: 250px;
             --first-color: #4723D9;
             --first-color-light: #AFA5D9;
             --white-color: #F7F6FB;
@@ -82,7 +82,7 @@
         .l-navbar {
             position: fixed;
             top: 0;
-            right: -30%;
+            left: -30%;
             width: var(--nav-width);
             height: 100vh;
             background-color: var(--first-color);
@@ -124,7 +124,7 @@
         .nav_link {
             position: relative;
             color: var(--first-color-light);
-            margin-bottom: 1.5rem;
+            margin-bottom: .5rem;
             transition: .3s;
         }
 
@@ -137,11 +137,11 @@
         }
 
         .show-nav {
-            right: 0;
+            left: 0;
         }
 
         .body-pd {
-            padding-right: calc(var(--nav-width) + 1rem);
+            padding-left: calc(var(--nav-width) + 1rem);
         }
 
         .active {
@@ -151,7 +151,7 @@
         .active::before {
             content: '';
             position: absolute;
-            right: 0;
+            left: 0;
             width: 2px;
             height: 32px;
             background-color: var(--white-color);
@@ -161,6 +161,27 @@
             height: 100vh;
         }
 
+        /* Form Styles */
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--first-color);
+            box-shadow: 0 0 0 0.2rem rgba(71, 35, 217, 0.1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Card Styles */
         .card {
             border: none;
             border-radius: 10px;
@@ -173,6 +194,14 @@
             padding: 1.5rem;
         }
 
+        /* Button Styles */
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
         .btn-primary {
             background-color: var(--first-color);
             border-color: var(--first-color);
@@ -181,8 +210,10 @@
         .btn-primary:hover {
             background-color: #3b1bb3;
             border-color: #3b1bb3;
+            transform: translateY(-1px);
         }
 
+        /* Table Styles */
         .table {
             margin-bottom: 0;
         }
@@ -191,6 +222,7 @@
             border-top: none;
             font-weight: 500;
             padding: 1rem;
+            color: #495057;
         }
 
         .table td {
@@ -198,19 +230,53 @@
             vertical-align: middle;
         }
 
-        .badge {
-            padding: 0.5em 1em;
+        .table-hover tbody tr:hover {
+            background-color: rgba(71, 35, 217, 0.05);
         }
 
+        /* Badge Styles */
+        .badge {
+            padding: 0.5em 1em;
+            font-weight: 500;
+            border-radius: 6px;
+        }
+
+        /* Dropdown Styles */
         .dropdown-menu {
             border: none;
             box-shadow: 0 0 20px rgba(0,0,0,.08);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(71, 35, 217, 0.05);
+        }
+
+        /* Navigation Sub-items */
+        .nav_sub {
+            padding-left: 2.5rem;
+            display: none;
+        }
+
+        .nav_sub.show {
+            display: block;
+        }
+
+        .nav_sub .nav_link {
+            font-size: 0.9rem;
+            padding: 0.3rem 0;
         }
 
         @media screen and (min-width: 768px) {
             body {
                 margin: calc(var(--header-height) + 1rem) 0 0 0;
-                padding-right: calc(var(--nav-width) + 2rem);
+                padding-left: calc(var(--nav-width) + 2rem);
             }
 
             .header {
@@ -218,17 +284,8 @@
                 padding: 0 2rem 0 calc(var(--nav-width) + 2rem);
             }
 
-            .header_img {
-                width: 40px;
-                height: 40px;
-            }
-
-            .header_img img {
-                width: 45px;
-            }
-
             .l-navbar {
-                right: 0;
+                left: 0;
                 padding: 1rem 1rem 0 0;
             }
 
@@ -237,7 +294,7 @@
             }
 
             .body-pd {
-                padding-right: calc(var(--nav-width) + 188px);
+                padding-left: calc(var(--nav-width) + 188px);
             }
         }
     </style>
@@ -282,26 +339,73 @@
                         <i class='bx bx-grid-alt nav_icon'></i>
                         <span class="nav_name">Dashboard</span>
                     </a>
-                    <a href="{{ route('admin.zones.index') }}" class="nav_link {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
-                        <i class='bx bx-map nav_icon'></i>
-                        <span class="nav_name">Zones</span>
-                    </a>
-                    <a href="{{ route('admin.locations.index') }}" class="nav_link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
-                        <i class='bx bx-pin nav_icon'></i>
-                        <span class="nav_name">Locations</span>
-                    </a>
-                    <a href="{{ route('admin.drivers.index') }}" class="nav_link {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
-                        <i class='bx bx-user nav_icon'></i>
-                        <span class="nav_name">Drivers</span>
-                    </a>
-                    <a href="{{ route('admin.activity-logs.index') }}" class="nav_link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
-                        <i class='bx bx-history nav_icon'></i>
-                        <span class="nav_name">Activity Logs</span>
-                    </a>
-                    <a href="{{ route('admin.login-logs.index') }}" class="nav_link {{ request()->routeIs('admin.login-logs.*') ? 'active' : '' }}">
-                        <i class='bx bx-log-in nav_icon'></i>
-                        <span class="nav_name">Login Logs</span>
-                    </a>
+
+                    <!-- Zones Management -->
+                    <div class="nav_item">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#zonesSubmenu">
+                            <i class='bx bx-map nav_icon'></i>
+                            <span class="nav_name">Zones</span>
+                        </a>
+                        <div class="collapse nav_sub" id="zonesSubmenu">
+                            <a href="{{ route('admin.zones.index') }}" class="nav_link">All Zones</a>
+                            <a href="{{ route('admin.zones.create') }}" class="nav_link">Add Zone</a>
+                            <a href="{{ route('admin.zones.assignments') }}" class="nav_link">Driver Assignments</a>
+                        </div>
+                    </div>
+
+                    <!-- Locations Management -->
+                    <div class="nav_item">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#locationsSubmenu">
+                            <i class='bx bx-pin nav_icon'></i>
+                            <span class="nav_name">Locations</span>
+                        </a>
+                        <div class="collapse nav_sub" id="locationsSubmenu">
+                            <a href="{{ route('admin.locations.index') }}" class="nav_link">All Locations</a>
+                            <a href="{{ route('admin.locations.create') }}" class="nav_link">Add Location</a>
+                            <a href="{{ route('admin.locations.import') }}" class="nav_link">Import Locations</a>
+                        </div>
+                    </div>
+
+                    <!-- Drivers Management -->
+                    <div class="nav_item">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#driversSubmenu">
+                            <i class='bx bx-user nav_icon'></i>
+                            <span class="nav_name">Drivers</span>
+                        </a>
+                        <div class="collapse nav_sub" id="driversSubmenu">
+                            <a href="{{ route('admin.drivers.index') }}" class="nav_link">All Drivers</a>
+                            <a href="{{ route('admin.drivers.create') }}" class="nav_link">Add Driver</a>
+                            <a href="{{ route('admin.drivers.performance') }}" class="nav_link">Performance</a>
+                        </div>
+                    </div>
+
+                    <!-- Reports & Logs -->
+                    <div class="nav_item">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#logsSubmenu">
+                            <i class='bx bx-history nav_icon'></i>
+                            <span class="nav_name">Reports & Logs</span>
+                        </a>
+                        <div class="collapse nav_sub" id="logsSubmenu">
+                            <a href="{{ route('admin.activity-logs.index') }}" class="nav_link">Activity Logs</a>
+                            <a href="{{ route('admin.login-logs.index') }}" class="nav_link">Login Logs</a>
+                            <a href="{{ route('admin.reports.delivery') }}" class="nav_link">Delivery Reports</a>
+                            <a href="{{ route('admin.reports.financial') }}" class="nav_link">Financial Reports</a>
+                            <a href="{{ route('admin.reports.performance') }}" class="nav_link">Performance Reports</a>
+                        </div>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="nav_item">
+                        <a href="#" class="nav_link" data-bs-toggle="collapse" data-bs-target="#settingsSubmenu">
+                            <i class='bx bx-cog nav_icon'></i>
+                            <span class="nav_name">Settings</span>
+                        </a>
+                        <div class="collapse nav_sub" id="settingsSubmenu">
+                            <a href="{{ route('admin.settings.general') }}" class="nav_link">General Settings</a>
+                            <a href="{{ route('admin.settings.notifications') }}" class="nav_link">Notifications</a>
+                            <a href="{{ route('admin.settings.api') }}" class="nav_link">API Settings</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <a href="#" class="nav_link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -342,14 +446,14 @@
 
             showNavbar('header-toggle','nav-bar','body-pd','header')
 
-            const linkColor = document.querySelectorAll('.nav_link')
-            function colorLink(){
-                if(linkColor){
-                    linkColor.forEach(l=> l.classList.remove('active'))
-                    this.classList.add('active')
+            // Keep submenu open for active items
+            const activeLink = document.querySelector('.nav_link.active')
+            if (activeLink) {
+                const submenu = activeLink.closest('.nav_sub')
+                if (submenu) {
+                    submenu.classList.add('show')
                 }
             }
-            linkColor.forEach(l=> l.addEventListener('click', colorLink))
         });
 
         // SweetAlert2 confirmation for delete actions
