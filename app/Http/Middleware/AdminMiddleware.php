@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
@@ -16,17 +17,30 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->check()) {
-            return response()->json([
-                'message' => 'Unauthenticated.'
-            ], 401);
+        if (!Auth::check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+            return redirect()->route('login');
         }
 
-        if (!auth()->user()->isAdmin()) {
-            return response()->json([
-                'message' => 'Unauthorized access. Admin privileges required.'
-            ], 403);
+        if (!Auth::user()->isAdmin()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+            }
+            return redirect()->route('login')->with('error', 'Unauthorized. Admin access required.');
         }
+
+        // Log admin activity
+        activity()
+            ->causedBy(Auth::user())
+            ->withProperties([
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'route' => $request->route()->getName(),
+                'method' => $request->method(),
+            ])
+            ->log('Admin route accessed');
 
         return $next($request);
     }

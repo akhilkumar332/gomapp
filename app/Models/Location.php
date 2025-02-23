@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Location extends Model
 {
@@ -23,7 +24,13 @@ class Location extends Model
         'latitude',
         'longitude',
         'contact_number',
-        'status'
+        'status',
+        'priority',
+        'started_at',
+        'completed_at',
+        'completed_by',
+        'payment_received',
+        'payment_amount_received'
     ];
 
     /**
@@ -34,15 +41,28 @@ class Location extends Model
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
-        'status' => 'string'
+        'status' => 'string',
+        'priority' => 'integer',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'payment_received' => 'boolean',
+        'payment_amount_received' => 'decimal:2'
     ];
 
     /**
      * Get the zone that this location belongs to.
      */
-    public function zone()
+    public function zone(): BelongsTo
     {
         return $this->belongsTo(Zone::class);
+    }
+
+    /**
+     * Get the driver who completed this delivery.
+     */
+    public function completedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 
     /**
@@ -59,5 +79,32 @@ class Location extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Check if location delivery is completed
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === 'completed' && !is_null($this->completed_at);
+    }
+
+    /**
+     * Check if payment has been received
+     */
+    public function hasPayment(): bool
+    {
+        return $this->payment_received && $this->payment_amount_received > 0;
+    }
+
+    /**
+     * Get delivery duration in minutes
+     */
+    public function getDeliveryDuration(): ?int
+    {
+        if ($this->started_at && $this->completed_at) {
+            return $this->started_at->diffInMinutes($this->completed_at);
+        }
+        return null;
     }
 }

@@ -154,4 +154,17 @@ class ActivityLogController extends Controller
         
         return view('admin.activity-logs.show', compact('log'));
     }
+
+    /**
+     * Display driver activities
+     */
+    public function driverActivities(Request $request)
+    {
+        $activities = ActivityLog::with('location')
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('driver.activities', compact('activities'));
+    }
 }

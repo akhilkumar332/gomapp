@@ -2,85 +2,127 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Zone;
 use App\Models\User;
+use App\Models\Zone;
 use App\Models\Location;
 use App\Models\ActivityLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * Show the admin dashboard.
-     */
     public function index()
     {
-        // Get total zones
+        // Basic Statistics
         $totalZones = Zone::count();
-
-        // Get active drivers (drivers who have updated their location in the last hour)
-        $oneHourAgo = Carbon::now()->subHour()->format('Y-m-d H:i:s');
         $activeDrivers = User::where('role', 'driver')
+            ->where('status', 'active')
             ->whereNotNull('last_location_update')
-            ->whereRaw("datetime(last_location_update) >= datetime(?)", [$oneHourAgo])
+            ->where('last_location_update', '>=', now()->subHour())
             ->count();
-
-        // Get total locations
         $totalLocations = Location::count();
-
-        // Get today's collections
-        $today = Carbon::today()->format('Y-m-d');
-        $todayCollections = Location::whereRaw("date(completed_at) = ?", [$today])
-            ->where('status', 'completed')
+        $todayCollections = Location::whereDate('completed_at', today())
             ->where('payment_received', true)
             ->sum('payment_amount_received');
 
-        // Get recent activities
+        // Performance Metrics
+        $performanceMetrics = $this->getPerformanceMetrics();
+
+        // Delivery Chart Data
+        $deliveryChart = $this->getDeliveryChartData();
+
+        // Recent Activities
         $recentActivities = ActivityLog::with('user')
             ->latest()
             ->take(10)
             ->get();
-
-        // Get performance metrics
-        $performanceMetrics = [
-            'delivery_success_rate' => $this->getDeliverySuccessRate(),
-            'average_delivery_time' => $this->getAverageDeliveryTime(),
-            'collections_by_zone' => $this->getCollectionsByZone(),
-            'driver_performance' => $this->getDriverPerformance(),
-        ];
 
         return view('admin.dashboard', compact(
             'totalZones',
             'activeDrivers',
             'totalLocations',
             'todayCollections',
-            'recentActivities',
-            'performanceMetrics'
+            'performanceMetrics',
+            'deliveryChart',
+            'recentActivities'
         ));
     }
 
-    /**
-     * Show the driver dashboard.
-     */
-    public function driverDashboard(Request $request)
+    private function getPerformanceMetrics()
     {
-        $driver = $request->user();
+        $thirtyDaysAgo = now()->subDays(30);
 
+        $totalDeliveries = Location::where('status', 'completed')
+            ->where('completed_at', '>=', $thirtyDaysAgo)
+            ->count();
+
+        $successfulDeliveries = Location::where('status', 'completed')
+            ->where('completed_at', '>=', $thirtyDaysAgo)
+            ->where('payment_received', true)
+            ->count();
+
+        $deliverySuccessRate = $totalDeliveries > 0 
+            ? round(($successfulDeliveries / $totalDeliveries) * 100) 
+            : 0;
+
+        $averageDeliveryTime = Location::where('status', 'completed')
+            ->where('completed_at', '>=', $thirtyDaysAgo)
+            ->whereNotNull('started_at')
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, started_at, completed_at)) as avg_time'))
+            ->first()
+            ->avg_time ?? 0;
+
+        return [
+            'delivery_success_rate' => $deliverySuccessRate,
+            'average_delivery_time' => round($averageDeliveryTime)
+        ];
+    }
+
+    private function getDeliveryChartData()
+    {
+        $days = 7;
+        $labels = [];
+        $completedData = [];
+        $totalData = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $labels[] = now()->subDays($i)->format('D');
+
+            $completed = Location::where('status', 'completed')
+                ->whereDate('completed_at', $date)
+                ->count();
+            $completedData[] = $completed;
+
+            $total = Location::whereDate('created_at', $date)->count();
+            $totalData[] = $total;
+        }
+
+        return [
+            'labels' => $labels,
+            'completed' => $completedData,
+            'total' => $totalData
+        ];
+    }
+
+    public function driverDashboard()
+    {
+        $driver = auth()->user();
+        
         // Get assigned zones
-        $zones = $driver->zones()
-            ->with(['locations' => function ($query) {
-                $query->whereNull('completed_at')
-                    ->orderBy('priority', 'desc');
-            }])
-            ->get();
+        $zones = $driver->zones()->with(['locations' => function ($query) {
+            $query->where('status', 'active');
+        }])->get();
+
+        // Get today's completed deliveries
+        $completedToday = Location::where('completed_by', $driver->id)
+            ->whereDate('completed_at', today())
+            ->count();
 
         // Get today's collections
-        $today = Carbon::today()->format('Y-m-d');
         $todayCollections = Location::where('completed_by', $driver->id)
-            ->whereRaw("date(completed_at) = ?", [$today])
-            ->where('status', 'completed')
+            ->whereDate('completed_at', today())
             ->where('payment_received', true)
             ->sum('payment_amount_received');
 
@@ -90,108 +132,11 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        // Get performance metrics
-        $performanceMetrics = [
-            'total_deliveries' => Location::where('completed_by', $driver->id)->count(),
-            'successful_deliveries' => Location::where('completed_by', $driver->id)
-                ->where('status', 'completed')
-                ->count(),
-            'total_collections' => Location::where('completed_by', $driver->id)
-                ->where('payment_received', true)
-                ->sum('payment_amount_received'),
-        ];
-
         return view('driver.dashboard', compact(
             'zones',
+            'completedToday',
             'todayCollections',
-            'recentActivities',
-            'performanceMetrics'
+            'recentActivities'
         ));
-    }
-
-    /**
-     * Calculate delivery success rate
-     */
-    private function getDeliverySuccessRate()
-    {
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
-        
-        $totalDeliveries = Location::whereNotNull('completed_at')
-            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
-            ->count();
-
-        $successfulDeliveries = Location::where('status', 'completed')
-            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
-            ->count();
-
-        return $totalDeliveries > 0 
-            ? round(($successfulDeliveries / $totalDeliveries) * 100, 2)
-            : 0;
-    }
-
-    /**
-     * Calculate average delivery time in minutes using SQLite compatible functions
-     */
-    private function getAverageDeliveryTime()
-    {
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
-        
-        return Location::where('status', 'completed')
-            ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo])
-            ->whereNotNull('started_at')
-            ->select(DB::raw('AVG(CAST((julianday(completed_at) - julianday(started_at)) * 24 * 60 AS INTEGER)) as avg_time'))
-            ->value('avg_time') ?? 0;
-    }
-
-    /**
-     * Get collections by zone
-     */
-    private function getCollectionsByZone()
-    {
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
-        
-        return Zone::with(['locations' => function ($query) use ($thirtyDaysAgo) {
-            $query->where('status', 'completed')
-                ->where('payment_received', true)
-                ->whereRaw("date(completed_at) >= ?", [$thirtyDaysAgo]);
-        }])
-        ->get()
-        ->map(function ($zone) {
-            return [
-                'id' => $zone->id,
-                'name' => $zone->name,
-                'total_collections' => $zone->locations->sum('payment_amount_received'),
-                'locations_count' => $zone->locations->count(),
-            ];
-        });
-    }
-
-    /**
-     * Get driver performance metrics
-     */
-    private function getDriverPerformance()
-    {
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
-        
-        $drivers = User::where('role', 'driver')
-            ->select('users.*')
-            ->selectRaw('COUNT(DISTINCT locations.id) as completed_locations_count')
-            ->selectRaw('SUM(CASE WHEN locations.payment_received = 1 THEN locations.payment_amount_received ELSE 0 END) as total_collections')
-            ->leftJoin('locations', function ($join) use ($thirtyDaysAgo) {
-                $join->on('users.id', '=', 'locations.completed_by')
-                    ->whereRaw("date(locations.completed_at) >= ?", [$thirtyDaysAgo]);
-            })
-            ->groupBy('users.id')
-            ->having('completed_locations_count', '>', 0)
-            ->get();
-
-        return $drivers->map(function ($driver) {
-            return [
-                'id' => $driver->id,
-                'name' => $driver->name,
-                'completed_deliveries' => $driver->completed_locations_count,
-                'total_collections' => $driver->total_collections,
-            ];
-        });
     }
 }

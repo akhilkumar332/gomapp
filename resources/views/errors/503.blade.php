@@ -1,239 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name') }} - Maintenance Mode</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
-    
-    <style>
-        :root {
-            --primary-color: #4723D9;
-            --primary-color-dark: #3b1bb3;
-            --body-font: 'Inter', sans-serif;
-        }
+@extends('errors.layout')
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+@section('code', '503')
 
-        body {
-            font-family: var(--body-font);
-            background-color: #f8f9fa;
-            color: #2D3748;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            line-height: 1.6;
-        }
+@section('title', 'Service Unavailable')
 
-        .maintenance-container {
-            text-align: center;
-            max-width: 600px;
-            padding: 2rem;
-            animation: fadeIn 0.5s ease-out;
-        }
+@section('icon')
+<i class="mdi mdi-cloud-off-outline icon"></i>
+@endsection
 
-        .maintenance-icon {
-            font-size: 4rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            animation: pulse 2s infinite;
-        }
+@section('message')
+Our service is temporarily unavailable.
+<br>
+We're working hard to get things back to normal.
 
-        .maintenance-title {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #2D3748;
-        }
-
-        .maintenance-message {
-            color: #6c757d;
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .maintenance-info {
-            background-color: rgba(71, 35, 217, 0.1);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .maintenance-info h3 {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        .maintenance-info p {
-            color: #4a5568;
-            font-size: 0.95rem;
-        }
-
-        .maintenance-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            background-color: #dc3545;
-            border-radius: 50%;
-            animation: blink 1s infinite;
-        }
-
-        .status-text {
-            font-weight: 500;
-            color: #dc3545;
-        }
-
-        .retry-button {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #fff;
-            background-color: var(--primary-color);
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .retry-button:hover {
-            background-color: var(--primary-color-dark);
-            transform: translateY(-1px);
-        }
-
-        .retry-button i {
-            margin-right: 0.5rem;
-            font-size: 1.25rem;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        @keyframes blink {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .maintenance-container {
-                padding: 1.5rem;
-            }
-
-            .maintenance-icon {
-                font-size: 3rem;
-            }
-
-            .maintenance-title {
-                font-size: 1.5rem;
-            }
-
-            .maintenance-message {
-                font-size: 1rem;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #1a202c;
-                color: #f7fafc;
-            }
-
-            .maintenance-title {
-                color: #f7fafc;
-            }
-
-            .maintenance-message {
-                color: #cbd5e0;
-            }
-
-            .maintenance-info {
-                background-color: rgba(71, 35, 217, 0.2);
-            }
-
-            .maintenance-info p {
-                color: #cbd5e0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="maintenance-container">
-        <i class='bx bx-wrench maintenance-icon'></i>
-        <h1 class="maintenance-title">We'll Be Right Back!</h1>
-        <p class="maintenance-message">
-            {{ $exception->getMessage() ?: 'We are currently performing scheduled maintenance. Please check back soon.' }}
-        </p>
-
-        <div class="maintenance-info">
-            <h3>What's Happening?</h3>
-            <p>Our team is working on improving your experience. This maintenance window helps us keep our services running smoothly and securely.</p>
+@if(isset($retryAfter))
+    <div class="retry-info" style="margin-top: 1rem; padding: 1rem; background: #F3F4F6; border-radius: 0.5rem;">
+        <div style="font-size: 0.875rem; color: #6B7280;">Expected resolution in:</div>
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--primary-color);">
+            <span id="countdown">{{ $retryAfter }}</span> seconds
         </div>
-
-        <div class="maintenance-status">
-            <span class="status-indicator"></span>
-            <span class="status-text">System Maintenance in Progress</span>
+        <div style="font-size: 0.875rem; color: #6B7280; margin-top: 0.5rem;">
+            Estimated time: <span id="estimatedTime">{{ now()->addSeconds($retryAfter)->format('H:i') }}</span>
         </div>
-
-        @if(isset($retryAfter))
-            <p class="maintenance-message">
-                Expected completion time: {{ now()->addSeconds($retryAfter)->diffForHumans() }}
-            </p>
-        @endif
-
-        <a href="{{ url('/') }}" class="retry-button">
-            <i class='bx bx-refresh'></i>
-            Try Again
-        </a>
     </div>
+@endif
 
-    @if(app()->environment('local'))
-        <script>
-            // Auto refresh in local environment
-            setTimeout(() => {
-                window.location.reload();
-            }, 5000);
-        </script>
+@if(app()->environment('local', 'staging'))
+    <div class="debug-info" style="margin-top: 1rem; padding: 1rem; background: #FEF3C7; color: #92400E; border-radius: 0.5rem; text-align: left; font-size: 0.875rem;">
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">Debug Information:</div>
+        @if(isset($exception))
+            <div>Message: {{ $exception->getMessage() }}</div>
+            <div>File: {{ basename($exception->getFile()) }}:{{ $exception->getLine() }}</div>
+        @endif
+        @if(isset($errorReference))
+            <div>Reference: {{ $errorReference }}</div>
+        @endif
+    </div>
+@endif
+@endsection
+
+@section('actions')
+<button onclick="window.location.reload()" class="btn btn-primary">
+    <i class="mdi mdi-refresh"></i>
+    Try Again
+</button>
+
+<a href="https://status.{{ request()->getHost() }}" target="_blank" class="btn btn-secondary">
+    <i class="mdi mdi-chart-line"></i>
+    Check System Status
+</a>
+
+@auth
+    @if(auth()->user()->isAdmin())
+        <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-secondary">
+            <i class="mdi mdi-history"></i>
+            View System Logs
+        </a>
     @endif
-</body>
-</html>
+@endauth
+@endsection
+
+@section('scripts')
+@if(isset($retryAfter))
+<script>
+    // Countdown timer
+    let timeLeft = {{ $retryAfter }};
+    const countdownElement = document.getElementById('countdown');
+    
+    const countdown = setInterval(() => {
+        timeLeft--;
+        countdownElement.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            window.location.reload();
+        }
+    }, 1000);
+
+    // Add a visual progress bar
+    const progressBar = document.createElement('div');
+    progressBar.style.width = '100%';
+    progressBar.style.height = '4px';
+    progressBar.style.backgroundColor = '#E5E7EB';
+    progressBar.style.borderRadius = '2px';
+    progressBar.style.marginTop = '0.5rem';
+    progressBar.style.overflow = 'hidden';
+
+    const progress = document.createElement('div');
+    progress.style.width = '100%';
+    progress.style.height = '100%';
+    progress.style.backgroundColor = 'var(--primary-color)';
+    progress.style.transition = 'width linear 1s';
+
+    progressBar.appendChild(progress);
+    document.querySelector('.retry-info').appendChild(progressBar);
+
+    // Update progress bar
+    const updateProgress = () => {
+        const percentage = (timeLeft / {{ $retryAfter }}) * 100;
+        progress.style.width = percentage + '%';
+    };
+
+    setInterval(updateProgress, 1000);
+    updateProgress();
+
+    // Check status periodically
+    const checkStatus = async () => {
+        try {
+            const response = await fetch('/api/health-check');
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.log('Service still unavailable');
+        }
+    };
+
+    // Check status every 10 seconds
+    setInterval(checkStatus, 10000);
+</script>
+@endif
+
+@if(app()->environment('local', 'staging'))
+<script>
+    // Auto-refresh in development/staging
+    setTimeout(() => {
+        window.location.reload();
+    }, 30000);
+</script>
+@endif
+@endsection

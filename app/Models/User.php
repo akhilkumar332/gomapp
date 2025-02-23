@@ -33,6 +33,7 @@ class User extends Authenticatable
         'last_latitude',
         'last_longitude',
         'last_location_update',
+        'last_activity',
     ];
 
     /**
@@ -54,6 +55,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
         'last_location_update' => 'datetime',
+        'last_activity' => 'datetime',
         'phone_verified' => 'boolean',
         'password' => 'hashed',
     ];
@@ -109,5 +111,26 @@ class User extends Authenticatable
             'phone_verified' => true,
             'phone_verified_at' => $this->freshTimestamp(),
         ])->save();
+    }
+
+    /**
+     * Get the activity logs for the user.
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Check if the user is currently online.
+     */
+    public function isOnline(): bool
+    {
+        if (!$this->last_activity) {
+            return false;
+        }
+
+        // Consider user online if they've been active in the last 5 minutes
+        return $this->last_activity->diffInMinutes(now()) < 5;
     }
 }

@@ -1,85 +1,207 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Stats Overview -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Total Zones</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $totalZones }}</div>
-                    </div>
-                </div>
+@extends('layouts.admin')
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Active Drivers</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $activeDrivers }}</div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Total Locations</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $totalLocations }}</div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Today's Collections</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">₵{{ number_format($todayCollections, 2) }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Performance Metrics -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-sm font-medium text-gray-500">Delivery Success Rate</div>
-                            <div class="mt-1 text-2xl font-semibold text-gray-900">
-                                {{ $performanceMetrics['delivery_success_rate'] }}%
-                            </div>
+@section('content')
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-map text-primary" style="font-size: 24px;"></i>
+                            </span>
                         </div>
-                        <div>
-                            <div class="text-sm font-medium text-gray-500">Average Delivery Time</div>
-                            <div class="mt-1 text-2xl font-semibold text-gray-900">
-                                {{ round($performanceMetrics['average_delivery_time']) }} minutes
-                            </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $totalZones }}</h3>
+                            <p class="text-muted mb-0">Total Zones</p>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Recent Activities -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
-                    <div class="space-y-4">
-                        @foreach($recentActivities as $activity)
-                            <div class="flex items-start space-x-3">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900">
-                                        {{ $activity->description }}
-                                    </p>
-                                    <p class="mt-0.5 text-sm text-gray-500">
-                                        By {{ $activity->user ? $activity->user->name : 'System' }} • {{ $activity->created_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-account-multiple text-success" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $activeDrivers }}</h3>
+                            <p class="text-muted mb-0">Active Drivers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-info bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-map-marker text-info" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $totalLocations }}</h3>
+                            <p class="text-muted mb-0">Total Locations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-warning bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-currency-usd text-warning" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">₵{{ number_format($todayCollections, 2) }}</h3>
+                            <p class="text-muted mb-0">Today's Collections</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+
+    <!-- Performance Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-8">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Delivery Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="deliveryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Delivery Success Rate</h6>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $performanceMetrics['delivery_success_rate'] }}%"></div>
+                        </div>
+                        <p class="mt-2 mb-0">{{ $performanceMetrics['delivery_success_rate'] }}% Success Rate</p>
+                    </div>
+
+                    <div>
+                        <h6 class="text-muted mb-2">Average Delivery Time</h6>
+                        <div class="d-flex align-items-center">
+                            <span class="display-6 me-2">{{ round($performanceMetrics['average_delivery_time']) }}</span>
+                            <span class="text-muted">minutes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Recent Activities</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Activity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentActivities as $activity)
+                            <tr>
+                                <td>{{ $activity->created_at->diffForHumans() }}</td>
+                                <td>{{ $activity->user ? $activity->user->name : 'System' }}</td>
+                                <td>{{ $activity->description }}</td>
+                                <td>
+                                    @if($activity->status === 'success')
+                                        <span class="badge bg-success">Success</span>
+                                    @elseif($activity->status === 'warning')
+                                        <span class="badge bg-warning">Warning</span>
+                                    @elseif($activity->status === 'error')
+                                        <span class="badge bg-danger">Error</span>
+                                    @else
+                                        <span class="badge bg-secondary">Info</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Delivery Performance Chart
+    const ctx = document.getElementById('deliveryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($deliveryChart['labels']) !!},
+            datasets: [{
+                label: 'Completed Deliveries',
+                data: {!! json_encode($deliveryChart['completed']) !!},
+                borderColor: '#8B5CF6',
+                backgroundColor: '#8B5CF6',
+                tension: 0.4,
+                fill: false
+            }, {
+                label: 'Total Deliveries',
+                data: {!! json_encode($deliveryChart['total']) !!},
+                borderColor: '#6B7280',
+                backgroundColor: '#6B7280',
+                tension: 0.4,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush

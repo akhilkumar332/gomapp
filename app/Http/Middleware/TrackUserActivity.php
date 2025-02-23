@@ -3,28 +3,33 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use App\Models\ActivityLog;
 
-class LogUserActivity
+class TrackUserActivity
 {
     /**
-     * Protected routes that should not be logged
+     * Routes that should not be tracked
      *
      * @var array
      */
     protected $excludedRoutes = [
-        'admin.dashboard',
-        'driver.dashboard',
         'login',
         'logout',
         '_debugbar.*',
         'sanctum.*',
+        '*.json',
+        '*.xml',
+        '*.ico',
+        'assets.*',
+        'images.*',
     ];
 
     /**
-     * Protected parameters that should be masked in logs
+     * Parameters that should be masked in logs
      *
      * @var array
      */
@@ -36,6 +41,9 @@ class LogUserActivity
         'device_token',
         'token',
         'api_key',
+        'credit_card',
+        'card_number',
+        'cvv',
     ];
 
     /**
@@ -47,30 +55,41 @@ class LogUserActivity
      */
     public function handle(Request $request, Closure $next)
     {
+        $startTime = microtime(true);
+
         // Process the request
         $response = $next($request);
 
-        // Don't log excluded routes
-        if ($this->shouldSkipLogging($request)) {
-            return $response;
-        }
+        if (Auth::check() && !$this->shouldSkipTracking($request)) {
+            $user = Auth::user();
+            $endTime = microtime(true);
+            $duration = round(($endTime - $startTime) * 1000, 2); // Duration in milliseconds
 
-        try {
-            $this->logActivity($request, $response);
-        } catch (\Exception $e) {
-            \Log::error('Failed to log user activity: ' . $e->getMessage());
+            // Update user's last activity
+            $this->updateLastActivity($user);
+
+            // Track user's location if provided
+            if ($request->has(['latitude', 'longitude'])) {
+                $this->updateUserLocation($user, $request);
+            }
+
+            // Log the activity
+            $this->logActivity($request, $response, $user, $duration);
+
+            // Update online status
+            $this->updateOnlineStatus($user);
         }
 
         return $response;
     }
 
     /**
-     * Determine if the request should be logged
+     * Determine if the request should be tracked
      *
      * @param  \Illuminate\Http\Request  $request
      * @return bool
      */
-    protected function shouldSkipLogging(Request $request)
+    protected function shouldSkipTracking(Request $request)
     {
         $route = $request->route();
         if (!$route) {
@@ -97,15 +116,51 @@ class LogUserActivity
     }
 
     /**
+     * Update user's last activity timestamp
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    protected function updateLastActivity($user)
+    {
+        $now = now();
+        
+        // Update the database every 5 minutes
+        if (!$user->last_activity || $user->last_activity->diffInMinutes($now) >= 5) {
+            $user->update(['last_activity' => $now]);
+        }
+
+        // Update cache more frequently (every 1 minute)
+        Cache::put("user.{$user->id}.last_activity", $now, 60);
+    }
+
+    /**
+     * Update user's location
+     *
+     * @param  \App\Models\User  $user
+     * @param  \Illuminate\Http\Request  $request
+     * @return void
+     */
+    protected function updateUserLocation($user, Request $request)
+    {
+        $user->update([
+            'last_latitude' => $request->latitude,
+            'last_longitude' => $request->longitude,
+            'last_location_update' => now(),
+        ]);
+    }
+
+    /**
      * Log the activity
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $response
+     * @param  \App\Models\User  $user
+     * @param  float  $duration
      * @return void
      */
-    protected function logActivity(Request $request, $response)
+    protected function logActivity(Request $request, $response, $user, $duration)
     {
-        $user = Auth::user();
         $route = $request->route();
         $method = $request->method();
         $path = $request->path();
@@ -126,26 +181,41 @@ class LogUserActivity
             $responseData = $this->limitArraySize($responseData);
         }
 
-        // Create activity log
         ActivityLog::create([
-            'user_id' => $user ? $user->id : null,
-            'user_type' => $user ? $user->role : null,
+            'user_id' => $user->id,
             'route_name' => $route->getName(),
             'method' => $method,
             'path' => $path,
             'status' => $this->getActivityStatus($statusCode),
             'ip_address' => $ip,
             'user_agent' => $userAgent,
+            'duration' => $duration,
             'input' => $input,
             'response' => $responseData,
             'status_code' => $statusCode,
-            'description' => $this->generateDescription($method, $route->getName()),
-            'properties' => [
-                'route_parameters' => $route->parameters(),
-                'headers' => $this->getRelevantHeaders($request),
-                'session_id' => session()->getId(),
-            ]
+            'location' => [
+                'latitude' => $user->last_latitude,
+                'longitude' => $user->last_longitude,
+            ],
         ]);
+    }
+
+    /**
+     * Update user's online status
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    protected function updateOnlineStatus($user)
+    {
+        $cacheKey = "user.{$user->id}.online";
+        
+        Cache::put($cacheKey, true, Carbon::now()->addMinutes(5));
+
+        // Broadcast user's online status if needed
+        if ($user->isDriver() && $user->device_token) {
+            broadcast(new UserOnline($user));
+        }
     }
 
     /**
@@ -206,62 +276,6 @@ class LogUserActivity
         }
 
         return $result;
-    }
-
-    /**
-     * Get relevant headers for logging
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    protected function getRelevantHeaders(Request $request)
-    {
-        $relevantHeaders = [
-            'accept',
-            'accept-language',
-            'accept-encoding',
-            'referer',
-            'user-agent',
-            'origin',
-            'content-type',
-        ];
-
-        $headers = [];
-        foreach ($relevantHeaders as $header) {
-            if ($request->headers->has($header)) {
-                $headers[$header] = $request->headers->get($header);
-            }
-        }
-
-        return $headers;
-    }
-
-    /**
-     * Generate human-readable description of the activity
-     *
-     * @param  string  $method
-     * @param  string  $routeName
-     * @return string
-     */
-    protected function generateDescription($method, $routeName)
-    {
-        $parts = explode('.', $routeName);
-        $action = end($parts);
-        $resource = $parts[count($parts) - 2] ?? '';
-
-        switch ($method) {
-            case 'GET':
-                return "Viewed $resource" . ($action !== 'index' ? " $action" : 's');
-            case 'POST':
-                return "Created new $resource";
-            case 'PUT':
-            case 'PATCH':
-                return "Updated $resource";
-            case 'DELETE':
-                return "Deleted $resource";
-            default:
-                return "Performed $method on $resource";
-        }
     }
 
     /**

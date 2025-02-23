@@ -4,56 +4,110 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @param  string|array  ...$roles
+     * @return mixed
      */
-    public function handle(Request $request, Closure $next, ...$roles): Response
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             if ($request->expectsJson()) {
-                return response()->json(['error' => 'Unauthenticated.'], 401);
+                return response()->json(['message' => 'Unauthenticated.'], 401);
             }
             return redirect()->route('login');
         }
 
-        // Allow if user has any of the required roles
-        if (empty($roles) || in_array(auth()->user()->role, $roles)) {
-            return $next($request);
+        $user = Auth::user();
+
+        // Convert single role to array
+        if (!is_array($roles)) {
+            $roles = [$roles];
         }
 
-        // Log unauthorized access attempt
-        \Log::warning('Unauthorized access attempt', [
-            'user_id' => auth()->id(),
-            'required_roles' => $roles,
-            'user_role' => auth()->user()->role,
-            'url' => $request->fullUrl(),
-            'ip' => $request->ip(),
+        // Check if user has any of the required roles
+        if (!in_array($user->role, $roles)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthorized. Required roles: ' . implode(', ', $roles),
+                    'required_roles' => $roles,
+                    'user_role' => $user->role
+                ], 403);
+            }
+
+            // Redirect based on user's role
+            switch ($user->role) {
+                case 'admin':
+                    return redirect()->route('admin.dashboard')
+                        ->with('error', 'You do not have permission to access that page.');
+                case 'driver':
+                    return redirect()->route('driver.dashboard')
+                        ->with('error', 'You do not have permission to access that page.');
+                default:
+                    return redirect()->route('login')
+                        ->with('error', 'You do not have permission to access that page.');
+            }
+        }
+
+        // Check if user is active
+        if ($user->status !== 'active') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your account is not active.',
+                    'status' => $user->status
+                ], 403);
+            }
+
+            Auth::logout();
+            return redirect()->route('login')
+                ->with('error', 'Your account is not active. Please contact support.');
+        }
+
+        // Add role information to request for controllers
+        $request->merge([
+            'user_role' => $user->role,
+            'role_permissions' => $this->getRolePermissions($user->role)
         ]);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'error' => 'Unauthorized. Required roles: ' . implode(', ', $roles)
-            ], 403);
-        }
+        return $next($request);
+    }
 
-        // Redirect based on user's current role
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'You do not have permission to access that page.');
-        }
+    /**
+     * Get permissions for a given role
+     *
+     * @param  string  $role
+     * @return array
+     */
+    protected function getRolePermissions($role)
+    {
+        $permissions = [
+            'admin' => [
+                'manage_drivers',
+                'manage_zones',
+                'manage_locations',
+                'view_reports',
+                'manage_settings',
+                'view_activity_logs',
+                'export_data',
+                'import_data',
+            ],
+            'driver' => [
+                'view_assigned_zones',
+                'view_locations',
+                'update_location_status',
+                'update_position',
+                'record_payment',
+                'view_own_activities',
+            ],
+        ];
 
-        if (auth()->user()->role === 'driver') {
-            return redirect()->route('driver.dashboard')
-                ->with('error', 'You do not have permission to access that page.');
-        }
-
-        return redirect()->route('login')
-            ->with('error', 'You do not have permission to access that page.');
+        return $permissions[$role] ?? [];
     }
 }

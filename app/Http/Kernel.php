@@ -16,11 +16,12 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
-        \Illuminate\Http\Middleware\HandleCors::class,
+        \App\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\TrackUserActivity::class,
     ];
 
     /**
@@ -40,9 +41,24 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Laravel\Sanctum\Sanctum::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\CustomThrottleRequests::class.':60,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\LogUserActivity::class,
+        ],
+
+        'admin' => [
+            'auth',
+            'admin',
+            'verified',
+            \App\Http\Middleware\CustomThrottleRequests::class.':120,1',
+        ],
+
+        'driver' => [
+            'auth',
+            'driver',
+            'verify.phone',
+            \App\Http\Middleware\CustomThrottleRequests::class.':60,1',
         ],
     ];
 
@@ -67,6 +83,40 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'driver' => \App\Http\Middleware\DriverMiddleware::class,
-        'verified.phone' => \App\Http\Middleware\VerifyPhone::class,
+        'verify.phone' => \App\Http\Middleware\VerifyPhone::class,
+        'role' => \App\Http\Middleware\CheckRole::class,
+        'track.activity' => \App\Http\Middleware\TrackUserActivity::class,
+        'custom.throttle' => \App\Http\Middleware\CustomThrottleRequests::class,
+        
+        // Webhook Middleware
+        'verify.firebase.webhook' => \App\Http\Middleware\VerifyFirebaseWebhook::class,
+        'verify.stripe.webhook' => \App\Http\Middleware\VerifyStripeWebhook::class,
+        'verify.twilio.webhook' => \App\Http\Middleware\VerifyTwilioWebhook::class,
+    ];
+
+    /**
+     * The priority-sorted list of middleware.
+     *
+     * Forces non-global middleware to always be in the given order.
+     *
+     * @var string[]
+     */
+    protected $middlewarePriority = [
+        \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+        \Illuminate\Contracts\Session\Middleware\AuthenticatesSessions::class,
+        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \Illuminate\Auth\Middleware\Authorize::class,
+        \App\Http\Middleware\AdminMiddleware::class,
+        \App\Http\Middleware\DriverMiddleware::class,
+        \App\Http\Middleware\VerifyPhone::class,
+        \App\Http\Middleware\LogUserActivity::class,
+        \App\Http\Middleware\TrackUserActivity::class,
+        \App\Http\Middleware\CustomThrottleRequests::class,
     ];
 }

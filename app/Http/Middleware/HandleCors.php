@@ -4,26 +4,21 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Str;
 
 class HandleCors
 {
     /**
      * Allowed origins for CORS requests.
-     * 
+     * Use environment variables to configure these.
+     *
      * @var array
      */
-    protected $allowedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:8000',
-        'https://delivery-management.com',
-        'https://*.delivery-management.com',
-    ];
+    protected $allowedOrigins;
 
     /**
-     * Allowed HTTP methods.
-     * 
+     * Allowed methods for CORS requests.
+     *
      * @var array
      */
     protected $allowedMethods = [
@@ -36,18 +31,47 @@ class HandleCors
     ];
 
     /**
-     * Allowed headers.
-     * 
+     * Allowed headers for CORS requests.
+     *
      * @var array
      */
     protected $allowedHeaders = [
         'Content-Type',
         'X-Requested-With',
         'Authorization',
-        'X-CSRF-TOKEN',
         'Accept',
-        'Origin',
+        'X-CSRF-TOKEN',
+        'X-Socket-Id',
+        'X-Device-Token',
+        'X-Firebase-Token',
     ];
+
+    /**
+     * Headers that are allowed to be exposed to the web browser.
+     *
+     * @var array
+     */
+    protected $exposedHeaders = [
+        'Cache-Control',
+        'Content-Language',
+        'Content-Type',
+        'Expires',
+        'Last-Modified',
+        'Pragma',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
+    ];
+
+    /**
+     * Create a new middleware instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->allowedOrigins = $this->parseAllowedOrigins();
+    }
 
     /**
      * Handle an incoming request.
@@ -56,123 +80,120 @@ class HandleCors
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
-        try {
-            // Handle preflight OPTIONS request
-            if ($request->isMethod('OPTIONS')) {
-                return $this->handlePreflightRequest($request);
-            }
-
-            // Get the origin
-            $origin = $request->header('Origin');
-
-            // If no origin header is present, allow the request
-            if (!$origin) {
-                return $next($request);
-            }
-
-            // Check if origin is allowed
-            if (!$this->isOriginAllowed($origin)) {
-                // Log unauthorized CORS attempt
-                Log::warning('Unauthorized CORS attempt', [
-                    'origin' => $origin,
-                    'ip' => $request->ip(),
-                    'url' => $request->fullUrl(),
-                    'method' => $request->method(),
-                ]);
-
-                return response()->json([
-                    'message' => 'Origin not allowed'
-                ], 403);
-            }
-
-            $response = $next($request);
-
-            // Add CORS headers to response
-            return $this->addCorsHeaders($response, $origin);
-        } catch (\Exception $e) {
-            Log::error('CORS handling error', [
-                'error' => $e->getMessage(),
-                'origin' => $request->header('Origin'),
-                'ip' => $request->ip(),
-            ]);
-
-            return response()->json([
-                'message' => 'CORS error occurred'
-            ], 500);
+        // If the request is not from an allowed origin, proceed without CORS headers
+        if (!$this->isAllowedOrigin($request->header('Origin'))) {
+            return $next($request);
         }
+
+        // Handle preflight OPTIONS request
+        if ($request->isMethod('OPTIONS')) {
+            return $this->handlePreflightRequest($request);
+        }
+
+        // Handle actual request
+        $response = $next($request);
+
+        return $this->addCorsHeaders($response, $request);
     }
 
     /**
-     * Handle preflight OPTIONS request.
+     * Parse allowed origins from environment variables.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return array
      */
-    protected function handlePreflightRequest(Request $request)
+    protected function parseAllowedOrigins()
     {
-        $origin = $request->header('Origin');
+        $origins = explode(',', config('cors.allowed_origins', '*'));
         
-        if (!$this->isOriginAllowed($origin)) {
-            return response()->json(['message' => 'Origin not allowed'], 403);
-        }
-
-        $headers = [
-            'Access-Control-Allow-Origin' => $origin,
-            'Access-Control-Allow-Methods' => implode(', ', $this->allowedMethods),
-            'Access-Control-Allow-Headers' => implode(', ', $this->allowedHeaders),
-            'Access-Control-Allow-Credentials' => 'true',
-            'Access-Control-Max-Age' => '86400', // 24 hours
-        ];
-
-        return response()->json(['message' => 'OK'], 200, $headers);
+        return array_map(function ($origin) {
+            return trim($origin);
+        }, $origins);
     }
 
     /**
-     * Add CORS headers to response.
-     *
-     * @param  \Symfony\Component\HttpFoundation\Response  $response
-     * @param  string  $origin
-     * @return \Symfony\Component\HttpFoundation\Response
-     */
-    protected function addCorsHeaders($response, $origin)
-    {
-        $response->headers->set('Access-Control-Allow-Origin', $origin);
-        $response->headers->set('Access-Control-Allow-Methods', implode(', ', $this->allowedMethods));
-        $response->headers->set('Access-Control-Allow-Headers', implode(', ', $this->allowedHeaders));
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        $response->headers->set('Vary', 'Origin');
-
-        return $response;
-    }
-
-    /**
-     * Check if the origin is allowed.
+     * Determine if the origin is allowed.
      *
      * @param  string|null  $origin
      * @return bool
      */
-    protected function isOriginAllowed(?string $origin): bool
+    protected function isAllowedOrigin($origin)
     {
-        if (!$origin) {
+        if (empty($origin)) {
             return false;
         }
 
+        if (in_array('*', $this->allowedOrigins)) {
+            return true;
+        }
+
+        return in_array($origin, $this->allowedOrigins) || 
+               $this->isAllowedWildcardOrigin($origin);
+    }
+
+    /**
+     * Determine if the origin matches any wildcard allowed origins.
+     *
+     * @param  string  $origin
+     * @return bool
+     */
+    protected function isAllowedWildcardOrigin($origin)
+    {
         foreach ($this->allowedOrigins as $allowedOrigin) {
-            // Handle wildcard subdomains
-            if (str_contains($allowedOrigin, '*')) {
-                $pattern = str_replace('*', '.*', preg_quote($allowedOrigin, '/'));
-                if (preg_match('/^' . $pattern . '$/', $origin)) {
-                    return true;
-                }
-            }
-            // Exact match
-            elseif ($allowedOrigin === $origin) {
+            if (Str::is($allowedOrigin, $origin)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Handle preflight request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    protected function handlePreflightRequest($request)
+    {
+        $headers = [
+            'Access-Control-Allow-Origin' => $request->header('Origin'),
+            'Access-Control-Allow-Methods' => implode(', ', $this->allowedMethods),
+            'Access-Control-Allow-Headers' => implode(', ', $this->allowedHeaders),
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Max-Age' => '86400',
+            'Content-Length' => '0',
+        ];
+
+        return response(null, 204, $headers);
+    }
+
+    /**
+     * Add CORS headers to the response.
+     *
+     * @param  \Illuminate\Http\Response  $response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    protected function addCorsHeaders($response, $request)
+    {
+        $response->headers->set('Access-Control-Allow-Origin', $request->header('Origin'));
+        $response->headers->set('Access-Control-Allow-Methods', implode(', ', $this->allowedMethods));
+        $response->headers->set('Access-Control-Allow-Headers', implode(', ', $this->allowedHeaders));
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
+        $response->headers->set('Access-Control-Expose-Headers', implode(', ', $this->exposedHeaders));
+
+        return $response;
+    }
+
+    /**
+     * Get the maximum age for CORS preflight requests.
+     *
+     * @return int
+     */
+    protected function getMaxAge()
+    {
+        return config('cors.max_age', 86400);
     }
 }

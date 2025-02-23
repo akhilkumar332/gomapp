@@ -2,34 +2,46 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance as Middleware;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Support\Facades\Auth;
 
 class PreventRequestsDuringMaintenance extends Middleware
 {
     /**
-     * The URIs that should be reachable while maintenance mode is enabled.
+     * The URIs that should be accessible while maintenance mode is enabled.
      *
      * @var array<int, string>
      */
     protected $except = [
-        // Health check endpoints
-        'health',
-        'health/*',
-        // Admin routes for disabling maintenance mode
-        'admin/maintenance/*',
-        // API endpoints that should remain accessible
-        'api/*/status',
-        // Webhook endpoints
-        'webhooks/*',
-        // Assets
-        'assets/*',
-        'css/*',
-        'js/*',
-        'images/*',
-        'fonts/*',
+        'login',
+        'logout',
+        'admin/*',
+        'api/admin/*',
+        'api/auth/*',
     ];
+
+    /**
+     * The roles that can bypass maintenance mode.
+     *
+     * @var array<int, string>
+     */
+    protected $bypassRoles = [
+        'admin',
+        'super_admin',
+    ];
+
+    /**
+     * Create a new middleware instance.
+     *
+     * @param  \Illuminate\Contracts\Foundation\Application  $app
+     * @return void
+     */
+    public function __construct(Application $app)
+    {
+        parent::__construct($app);
+    }
 
     /**
      * Handle an incoming request.
@@ -37,56 +49,25 @@ class PreventRequestsDuringMaintenance extends Middleware
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      * @return mixed
-     *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
-    public function handle($request, \Closure $next)
+    public function handle($request, Closure $next)
     {
-        try {
-            if ($this->app->maintenanceMode()->active()) {
-                $data = $this->app->maintenanceMode()->data();
-
-                // Log maintenance mode access attempt
-                Log::info('Maintenance mode access attempt', [
-                    'url' => $request->fullUrl(),
-                    'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'user_id' => auth()->id(),
-                    'maintenance_data' => $data
-                ]);
-
-                if ($this->shouldPassThrough($request)) {
-                    return $next($request);
-                }
-
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'message' => $data['message'] ?? 'Application is down for maintenance.',
-                        'status' => 'maintenance',
-                        'retry_after' => $data['retry'] ?? null,
-                        'estimated_time' => $data['time'] ?? null
-                    ], 503);
-                }
-
-                throw new HttpException(
-                    503,
-                    $data['message'] ?? 'Service Unavailable',
-                    null,
-                    [],
-                    $data['retry'] ?? null
-                );
+        if ($this->app->isDownForMaintenance()) {
+            // Check if user can bypass maintenance mode
+            if ($this->canBypassMaintenance($request)) {
+                return $next($request);
             }
 
-            return $next($request);
-        } catch (\Exception $e) {
-            Log::error('Error in maintenance mode middleware', [
-                'error' => $e->getMessage(),
-                'url' => $request->fullUrl(),
-                'ip' => $request->ip()
-            ]);
+            // Check if the request is for an excepted URI
+            if ($this->inExceptArray($request)) {
+                return $next($request);
+            }
 
-            throw $e;
+            // Return maintenance mode response
+            return $this->handleMaintenanceMode($request);
         }
+
+        return $next($request);
     }
 
     /**
@@ -95,14 +76,8 @@ class PreventRequestsDuringMaintenance extends Middleware
      * @param  \Illuminate\Http\Request  $request
      * @return bool
      */
-    protected function shouldPassThrough($request)
+    protected function inExceptArray($request)
     {
-        // Allow admin users to bypass maintenance mode
-        if (auth()->check() && auth()->user()->role === 'admin') {
-            return true;
-        }
-
-        // Check if the request matches any except patterns
         foreach ($this->except as $except) {
             if ($except !== '/') {
                 $except = trim($except, '/');
@@ -114,5 +89,86 @@ class PreventRequestsDuringMaintenance extends Middleware
         }
 
         return false;
+    }
+
+    /**
+     * Determine if the authenticated user can bypass maintenance mode.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return bool
+     */
+    protected function canBypassMaintenance($request)
+    {
+        // Check for maintenance mode bypass token in request
+        $token = $request->header('X-Maintenance-Token') ?? $request->input('maintenance_token');
+        if ($token && $token === config('app.maintenance_token')) {
+            return true;
+        }
+
+        // Check for user role-based bypass
+        if (Auth::check() && in_array(Auth::user()->role, $this->bypassRoles)) {
+            return true;
+        }
+
+        // Check for specific IP addresses that can bypass
+        $bypassIps = config('app.maintenance_bypass_ips', []);
+        if (in_array($request->ip(), $bypassIps)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle the maintenance mode response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return mixed
+     */
+    protected function handleMaintenanceMode($request)
+    {
+        $maintenanceMode = $this->app->maintenanceMode();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $maintenanceMode->getMessage() ?: 'Application is currently under maintenance.',
+                'retry_after' => $maintenanceMode->getRetryAfter(),
+                'status' => 'maintenance',
+            ], 503);
+        }
+
+        // For web requests, return a view
+        return response()->view('errors.maintenance', [
+            'message' => $maintenanceMode->getMessage(),
+            'retryAfter' => $maintenanceMode->getRetryAfter(),
+            'whenAvailable' => now()->addSeconds($maintenanceMode->getRetryAfter())->diffForHumans(),
+            'estimatedDuration' => $this->formatDuration($maintenanceMode->getRetryAfter()),
+        ], 503);
+    }
+
+    /**
+     * Format the maintenance mode duration into a human-readable string.
+     *
+     * @param  int  $seconds
+     * @return string
+     */
+    protected function formatDuration($seconds)
+    {
+        if ($seconds < 60) {
+            return $seconds . ' seconds';
+        }
+
+        if ($seconds < 3600) {
+            $minutes = floor($seconds / 60);
+            return $minutes . ' ' . str_plural('minute', $minutes);
+        }
+
+        if ($seconds < 86400) {
+            $hours = floor($seconds / 3600);
+            return $hours . ' ' . str_plural('hour', $hours);
+        }
+
+        $days = floor($seconds / 86400);
+        return $days . ' ' . str_plural('day', $days);
     }
 }

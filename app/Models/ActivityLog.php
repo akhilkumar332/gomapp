@@ -20,7 +20,22 @@ class ActivityLog extends Model
         'description',
         'device_type',
         'ip_address',
-        'user_agent'
+        'user_agent',
+        'location_id',
+        'status',
+        'input',
+        'response',
+        'status_code'
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'input' => 'array',
+        'response' => 'array'
     ];
 
     /**
@@ -29,6 +44,14 @@ class ActivityLog extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the location associated with this activity.
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**

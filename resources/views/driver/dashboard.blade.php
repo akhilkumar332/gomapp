@@ -1,100 +1,164 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Stats Overview -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Total Deliveries</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $performanceMetrics['total_deliveries'] }}</div>
-                    </div>
-                </div>
+@extends('layouts.driver')
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Successful Deliveries</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">{{ $performanceMetrics['successful_deliveries'] }}</div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="text-sm font-medium text-gray-500">Today's Collections</div>
-                        <div class="mt-1 text-3xl font-semibold text-gray-900">₵{{ number_format($todayCollections, 2) }}</div>
+@section('content')
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-map text-primary" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $zones->count() }}</h3>
+                            <p class="text-muted mb-0">Assigned Zones</p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Assigned Zones -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Zones</h3>
-                    <div class="space-y-4">
-                        @foreach($zones as $zone)
-                            <div class="border rounded-lg p-4">
-                                <h4 class="text-lg font-medium text-gray-900">{{ $zone->name }}</h4>
-                                <p class="mt-1 text-sm text-gray-500">{{ $zone->locations->count() }} pending deliveries</p>
-                                
-                                @if($zone->locations->isNotEmpty())
-                                    <div class="mt-4 space-y-3">
-                                        @foreach($zone->locations as $location)
-                                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                                <div>
-                                                    <p class="font-medium text-gray-900">{{ $location->shop_name }}</p>
-                                                    <p class="text-sm text-gray-500">{{ $location->address }}</p>
-                                                    @if($location->payment_required)
-                                                        <p class="mt-1 text-sm font-medium text-indigo-600">
-                                                            Collection: ₵{{ number_format($location->payment_amount, 2) }}
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="#" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                        View Details
-                                                    </a>
-                                                    <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                        Start Delivery
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="mt-4 text-sm text-gray-500">No pending deliveries in this zone.</div>
-                                @endif
-                            </div>
-                        @endforeach
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-check-circle text-success" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $completedToday }}</h3>
+                            <p class="text-muted mb-0">Completed Today</p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Recent Activities -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
-                    <div class="space-y-4">
-                        @foreach($recentActivities as $activity)
-                            <div class="flex items-start space-x-3">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900">
-                                        {{ $activity->description }}
-                                    </p>
-                                    <p class="mt-0.5 text-sm text-gray-500">
-                                        {{ $activity->created_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-warning bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-currency-usd text-warning" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">₵{{ number_format($todayCollections, 2) }}</h3>
+                            <p class="text-muted mb-0">Today's Collections</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+
+    <!-- Assigned Zones -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Assigned Zones</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                @foreach($zones as $zone)
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ $zone->name }}</h5>
+                                <p class="text-muted">{{ $zone->description }}</p>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted">Active Locations</span>
+                                    <span class="badge bg-primary">{{ $zone->locations->count() }}</span>
+                                </div>
+
+                                <a href="{{ route('driver.zones.show', $zone) }}" class="btn btn-primary w-100">
+                                    View Locations
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent Activities</h5>
+            <a href="{{ route('driver.activities') }}" class="btn btn-sm btn-primary">View All</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th>Activity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentActivities as $activity)
+                            <tr>
+                                <td>{{ $activity->created_at->diffForHumans() }}</td>
+                                <td>{{ $activity->location ? $activity->location->shop_name : 'N/A' }}</td>
+                                <td>{{ $activity->description }}</td>
+                                <td>
+                                    @if($activity->status === 'success')
+                                        <span class="badge bg-success">Success</span>
+                                    @elseif($activity->status === 'warning')
+                                        <span class="badge bg-warning">Warning</span>
+                                    @elseif($activity->status === 'error')
+                                        <span class="badge bg-danger">Error</span>
+                                    @else
+                                        <span class="badge bg-secondary">Info</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+// Initialize any driver-specific JavaScript here
+document.addEventListener('DOMContentLoaded', function() {
+    // Example: Update driver location periodically
+    function updateLocation() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                fetch('/api/driver/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    })
+                });
+            });
+        }
+    }
+
+    // Update location every 5 minutes
+    setInterval(updateLocation, 300000);
+    updateLocation(); // Initial update
+});
+</script>
+@endpush
