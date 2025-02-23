@@ -4,166 +4,398 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') - Delivery Management</title>
+    <title>{{ config('app.name', 'Delivery Management') }} - Admin</title>
 
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Styles -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background-color: #343a40;
-            padding-top: 1rem;
+        :root {
+            --header-height: 3rem;
+            --nav-width: 68px;
+            --first-color: #4723D9;
+            --first-color-light: #AFA5D9;
+            --white-color: #F7F6FB;
+            --body-font: 'Inter', sans-serif;
+            --normal-font-size: 1rem;
+            --z-fixed: 100;
         }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 0.5rem 1rem;
-            margin: 0.2rem 0;
-            border-radius: 0.25rem;
+
+        *,::before,::after {
+            box-sizing: border-box;
         }
-        .sidebar .nav-link:hover {
-            color: #fff;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .sidebar .nav-link.active {
-            color: #fff;
-            background-color: #007bff;
-        }
-        .sidebar .nav-link i {
-            width: 1.5rem;
-            text-align: center;
-            margin-right: 0.5rem;
-        }
-        .content {
-            padding: 2rem;
+
+        body {
+            position: relative;
+            margin: var(--header-height) 0 0 0;
+            padding: 0 1rem;
+            font-family: var(--body-font);
+            font-size: var(--normal-font-size);
+            transition: .5s;
             background-color: #f8f9fa;
         }
-        .navbar {
+
+        a {
+            text-decoration: none;
+        }
+
+        .header {
+            width: 100%;
+            height: var(--header-height);
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            background-color: var(--white-color);
+            z-index: var(--z-fixed);
+            transition: .5s;
             box-shadow: 0 2px 4px rgba(0,0,0,.1);
         }
-        .dropdown-menu {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+        .header_toggle {
+            color: var(--first-color);
+            font-size: 1.5rem;
+            cursor: pointer;
         }
+
+        .header_img {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .header_img img {
+            width: 40px;
+        }
+
+        .l-navbar {
+            position: fixed;
+            top: 0;
+            right: -30%;
+            width: var(--nav-width);
+            height: 100vh;
+            background-color: var(--first-color);
+            padding: .5rem 1rem 0 0;
+            transition: .5s;
+            z-index: var(--z-fixed);
+        }
+
+        .nav {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .nav_logo, .nav_link {
+            display: grid;
+            grid-template-columns: max-content max-content;
+            align-items: center;
+            column-gap: 1rem;
+            padding: .5rem 0 .5rem 1.5rem;
+        }
+
+        .nav_logo {
+            margin-bottom: 2rem;
+        }
+
+        .nav_logo-icon {
+            font-size: 1.25rem;
+            color: var(--white-color);
+        }
+
+        .nav_logo-name {
+            color: var(--white-color);
+            font-weight: 700;
+        }
+
+        .nav_link {
+            position: relative;
+            color: var(--first-color-light);
+            margin-bottom: 1.5rem;
+            transition: .3s;
+        }
+
+        .nav_link:hover {
+            color: var(--white-color);
+        }
+
+        .nav_icon {
+            font-size: 1.25rem;
+        }
+
+        .show-nav {
+            right: 0;
+        }
+
+        .body-pd {
+            padding-right: calc(var(--nav-width) + 1rem);
+        }
+
+        .active {
+            color: var(--white-color);
+        }
+
+        .active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            width: 2px;
+            height: 32px;
+            background-color: var(--white-color);
+        }
+
+        .height-100 {
+            height: 100vh;
+        }
+
         .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,.08);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,.05);
+            padding: 1.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--first-color);
+            border-color: var(--first-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #3b1bb3;
+            border-color: #3b1bb3;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 500;
+            padding: 1rem;
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .badge {
+            padding: 0.5em 1em;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 0 20px rgba(0,0,0,.08);
+        }
+
+        @media screen and (min-width: 768px) {
+            body {
+                margin: calc(var(--header-height) + 1rem) 0 0 0;
+                padding-right: calc(var(--nav-width) + 2rem);
+            }
+
+            .header {
+                height: calc(var(--header-height) + 1rem);
+                padding: 0 2rem 0 calc(var(--nav-width) + 2rem);
+            }
+
+            .header_img {
+                width: 40px;
+                height: 40px;
+            }
+
+            .header_img img {
+                width: 45px;
+            }
+
+            .l-navbar {
+                right: 0;
+                padding: 1rem 1rem 0 0;
+            }
+
+            .show-nav {
+                width: calc(var(--nav-width) + 156px);
+            }
+
+            .body-pd {
+                padding-right: calc(var(--nav-width) + 188px);
+            }
         }
     </style>
     @stack('styles')
 </head>
-<body>
-    <div class="d-flex">
-        <!-- Sidebar -->
-        <div class="sidebar" style="width: 250px;">
-            <div class="px-3 mb-4">
-                <h5 class="text-white">Delivery Management</h5>
+<body id="body-pd">
+    <header class="header" id="header">
+        <div class="header_toggle">
+            <i class='bx bx-menu' id="header-toggle"></i>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="dropdown">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="me-2">{{ Auth::user()->name }}</span>
+                    <div class="header_img">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=4723D9&color=fff" alt="Profile">
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser1">
+                    <li><a class="dropdown-item" href="{{ route('admin.profile') }}">Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="dropdown-item">Logout</button>
+                        </form>
+                    </li>
+                </ul>
             </div>
-            <nav class="nav flex-column">
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-                <a href="{{ route('admin.zones.index') }}" class="nav-link {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
-                    <i class="fas fa-map-marked-alt"></i> Zones
-                </a>
-                <a href="{{ route('admin.locations.index') }}" class="nav-link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
-                    <i class="fas fa-map-marker-alt"></i> Locations
-                </a>
-                <a href="{{ route('admin.drivers.index') }}" class="nav-link {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
-                    <i class="fas fa-users"></i> Drivers
-                </a>
-                <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
-                    <i class="fas fa-money-bill-wave"></i> Payments
-                </a>
-
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" 
-                       data-bs-toggle="dropdown" href="#" role="button">
-                        <i class="fas fa-chart-bar"></i> Reports
-                    </a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{{ route('admin.reports.driver-activity') }}">Driver Activity</a>
-                        <a class="dropdown-item" href="{{ route('admin.reports.zone-statistics') }}">Zone Statistics</a>
-                        <a class="dropdown-item" href="{{ route('admin.reports.system-usage') }}">System Usage</a>
-                    </div>
-                </div>
-
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}" 
-                       data-bs-toggle="dropdown" href="#" role="button">
-                        <i class="fas fa-history"></i> Logs
-                    </a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{{ route('admin.activity-logs.index') }}">Activity Logs</a>
-                        <a class="dropdown-item" href="{{ route('admin.login-logs.index') }}">Login Logs</a>
-                    </div>
-                </div>
-
-                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
-            </nav>
         </div>
+    </header>
 
-        <!-- Main Content -->
-        <div class="flex-grow-1">
-            <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white">
-                <div class="container-fluid">
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-circle me-1"></i>
-                                    {{ Auth::user()->name }}
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="{{ route('admin.profile') }}">
-                                        <i class="fas fa-user me-2"></i> Profile
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                        </button>
-                                    </form>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+    <div class="l-navbar" id="nav-bar">
+        <nav class="nav">
+            <div>
+                <a href="{{ route('admin.dashboard') }}" class="nav_logo">
+                    <i class='bx bx-layer nav_logo-icon'></i>
+                    <span class="nav_logo-name">Admin Panel</span>
+                </a>
+                <div class="nav_list">
+                    <a href="{{ route('admin.dashboard') }}" class="nav_link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class='bx bx-grid-alt nav_icon'></i>
+                        <span class="nav_name">Dashboard</span>
+                    </a>
+                    <a href="{{ route('admin.zones.index') }}" class="nav_link {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
+                        <i class='bx bx-map nav_icon'></i>
+                        <span class="nav_name">Zones</span>
+                    </a>
+                    <a href="{{ route('admin.locations.index') }}" class="nav_link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
+                        <i class='bx bx-pin nav_icon'></i>
+                        <span class="nav_name">Locations</span>
+                    </a>
+                    <a href="{{ route('admin.drivers.index') }}" class="nav_link {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
+                        <i class='bx bx-user nav_icon'></i>
+                        <span class="nav_name">Drivers</span>
+                    </a>
+                    <a href="{{ route('admin.activity-logs.index') }}" class="nav_link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}">
+                        <i class='bx bx-history nav_icon'></i>
+                        <span class="nav_name">Activity Logs</span>
+                    </a>
+                    <a href="{{ route('admin.login-logs.index') }}" class="nav_link {{ request()->routeIs('admin.login-logs.*') ? 'active' : '' }}">
+                        <i class='bx bx-log-in nav_icon'></i>
+                        <span class="nav_name">Login Logs</span>
+                    </a>
                 </div>
-            </nav>
+            </div>
+            <a href="#" class="nav_link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class='bx bx-log-out nav_icon'></i>
+                <span class="nav_name">Logout</span>
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                @csrf
+            </form>
+        </nav>
+    </div>
 
-            <!-- Page Content -->
-            <main class="content">
-                @yield('content')
-            </main>
-        </div>
+    <div class="content">
+        @yield('content')
     </div>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Initialize all tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
+        document.addEventListener("DOMContentLoaded", function(event) {
+            const showNavbar = (toggleId, navId, bodyId, headerId) =>{
+                const toggle = document.getElementById(toggleId),
+                nav = document.getElementById(navId),
+                bodypd = document.getElementById(bodyId),
+                headerpd = document.getElementById(headerId)
+
+                if(toggle && nav && bodypd && headerpd){
+                    toggle.addEventListener('click', ()=>{
+                        nav.classList.toggle('show-nav')
+                        toggle.classList.toggle('bx-x')
+                        bodypd.classList.toggle('body-pd')
+                        headerpd.classList.toggle('body-pd')
+                    })
+                }
+            }
+
+            showNavbar('header-toggle','nav-bar','body-pd','header')
+
+            const linkColor = document.querySelectorAll('.nav_link')
+            function colorLink(){
+                if(linkColor){
+                    linkColor.forEach(l=> l.classList.remove('active'))
+                    this.classList.add('active')
+                }
+            }
+            linkColor.forEach(l=> l.addEventListener('click', colorLink))
         });
 
-        // Handle active state for nested dropdowns
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.dropdown-menu a').forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
-                    link.closest('.nav-item').querySelector('.nav-link').classList.add('active');
+        // SweetAlert2 confirmation for delete actions
+        $(document).on('click', '.delete-confirm', function(e) {
+            e.preventDefault();
+            const form = $(this).closest('form');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#4723D9',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
                 }
             });
         });
+
+        // Toast notifications
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: '{{ session('success') }}',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        @endif
+
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: '{{ session('error') }}',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        @endif
     </script>
     @stack('scripts')
 </body>
