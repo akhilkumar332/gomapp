@@ -138,6 +138,23 @@
                             @enderror
                         </div>
 
+                        <div class="mb-3">
+                            <label for="priority" class="form-label required">Priority</label>
+                            <select class="form-select @error('priority') is-invalid @enderror" 
+                                    id="priority" 
+                                    name="priority" 
+                                    required>
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <option value="{{ $i }}" {{ $location->priority == $i ? 'selected' : '' }}>
+                                        {{ $i }} - {{ $i == 1 ? 'Highest' : ($i == 5 ? 'Lowest' : 'Medium') }}
+                                    </option>
+                                @endfor
+                            </select>
+                            @error('priority')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i> Update Location
