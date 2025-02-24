@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,15 +33,10 @@ class AdminMiddleware
         }
 
         // Log admin activity
-        activity()
-            ->causedBy(Auth::user())
-            ->withProperties([
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'route' => $request->route()->getName(),
-                'method' => $request->method(),
-            ])
-            ->log('Admin route accessed');
+        ActivityLog::log(
+            'admin_route_access',
+            'Admin route accessed: ' . $request->route()->getName()
+        );
 
         return $next($request);
     }
