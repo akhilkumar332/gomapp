@@ -1,144 +1,111 @@
-@extends('layouts.admin')
-
-@section('title', 'Application Settings')
-
-@section('content')
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Application Settings</h1>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<x-app-layout>
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Application Settings</h1>
         </div>
-    @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+        @if(session('success'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ session('success') }}</span>
+            </div>
+        @endif
 
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Branding Settings</h5>
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Branding Settings -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold">Branding Settings</h2>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        <div class="mb-3">
-                            <label for="app_name" class="form-label">Application Name</label>
+                        <div class="mb-4">
+                            <label for="app_name" class="block text-sm font-medium text-gray-700 mb-1">Application Name</label>
                             <input type="text" 
-                                   class="form-control @error('app_name') is-invalid @enderror" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('app_name') border-red-500 @enderror" 
                                    id="app_name" 
                                    name="app_name" 
                                    value="{{ old('app_name', $settings['branding']['app_name'] ?? config('app.name')) }}">
                             @error('app_name')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="primary_color" class="form-label">Primary Color</label>
+                        <div class="mb-4">
+                            <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
                             <input type="color" 
-                                   class="form-control form-control-color @error('primary_color') is-invalid @enderror" 
+                                   class="h-10 p-1 rounded border border-gray-300 @error('primary_color') border-red-500 @enderror" 
                                    id="primary_color" 
                                    name="primary_color" 
                                    value="{{ old('primary_color', $settings['branding']['primary_color'] ?? '#007bff') }}">
                             @error('primary_color')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="secondary_color" class="form-label">Secondary Color</label>
+                        <div class="mb-4">
+                            <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
                             <input type="color" 
-                                   class="form-control form-control-color @error('secondary_color') is-invalid @enderror" 
+                                   class="h-10 p-1 rounded border border-gray-300 @error('secondary_color') border-red-500 @enderror" 
                                    id="secondary_color" 
                                    name="secondary_color" 
                                    value="{{ old('secondary_color', $settings['branding']['secondary_color'] ?? '#6c757d') }}">
                             @error('secondary_color')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="accent_color" class="form-label">Accent Color</label>
-                            <input type="color" 
-                                   class="form-control form-control-color @error('accent_color') is-invalid @enderror" 
-                                   id="accent_color" 
-                                   name="accent_color" 
-                                   value="{{ old('accent_color', $settings['branding']['accent_color'] ?? '#28a745') }}">
-                            @error('accent_color')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="logo" class="form-label">Logo</label>
+                        <div class="mb-4">
+                            <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
                             @if(isset($settings['branding']['logo_url']))
                                 <div class="mb-2">
                                     <img src="{{ $settings['branding']['logo_url'] }}" 
                                          alt="Current Logo" 
-                                         class="img-thumbnail" 
-                                         style="max-height: 100px;">
+                                         class="max-h-24 rounded">
                                 </div>
                             @endif
                             <input type="file" 
-                                   class="form-control @error('logo') is-invalid @enderror" 
+                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 @error('logo') border-red-500 @enderror" 
                                    id="logo" 
                                    name="logo" 
                                    accept="image/*">
                             @error('logo')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="favicon" class="form-label">Favicon</label>
+                        <div class="mb-4">
+                            <label for="favicon" class="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
                             @if(isset($settings['branding']['favicon_url']))
                                 <div class="mb-2">
                                     <img src="{{ $settings['branding']['favicon_url'] }}" 
                                          alt="Current Favicon" 
-                                         class="img-thumbnail" 
-                                         style="max-height: 32px;">
+                                         class="max-h-8 rounded">
                                 </div>
                             @endif
                             <input type="file" 
-                                   class="form-control @error('favicon') is-invalid @enderror" 
+                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 @error('favicon') border-red-500 @enderror" 
                                    id="favicon" 
                                    name="favicon" 
                                    accept="image/x-icon,image/png">
                             @error('favicon')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i> Update Branding
+                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Update Branding
                         </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-@push('scripts')
-<script>
-    // Update color input text values
-    document.querySelectorAll('input[type="color"]').forEach(input => {
-        input.addEventListener('input', function() {
-            this.nextElementSibling.value = this.value;
-        });
-    });
-</script>
-@endpush
-
-@endsection
+</x-app-layout>
