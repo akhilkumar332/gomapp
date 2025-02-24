@@ -14,36 +14,18 @@ class ZoneSeeder extends Seeder
     {
         $zones = [
             [
-                'name' => 'North Accra',
-                'description' => 'Northern region of Accra',
-                'boundaries' => json_encode([
-                    [5.6500, -0.2000],
-                    [5.6500, -0.1500],
-                    [5.7000, -0.1500],
-                    [5.7000, -0.2000],
-                ]),
+                'name' => 'North Zone',
+                'description' => 'Northern region delivery zone',
                 'status' => 'active',
             ],
             [
-                'name' => 'Central Accra',
-                'description' => 'Central business district',
-                'boundaries' => json_encode([
-                    [5.6000, -0.2500],
-                    [5.6000, -0.1800],
-                    [5.6500, -0.1800],
-                    [5.6500, -0.2500],
-                ]),
+                'name' => 'South Zone',
+                'description' => 'Southern region delivery zone',
                 'status' => 'active',
             ],
             [
-                'name' => 'South Accra',
-                'description' => 'Southern coastal region',
-                'boundaries' => json_encode([
-                    [5.5500, -0.2500],
-                    [5.5500, -0.1500],
-                    [5.6000, -0.1500],
-                    [5.6000, -0.2500],
-                ]),
+                'name' => 'Central Zone',
+                'description' => 'Central region delivery zone',
                 'status' => 'active',
             ],
         ];
