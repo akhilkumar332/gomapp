@@ -18,6 +18,7 @@ class Zone extends Model
     protected $fillable = [
         'name',
         'description',
+        'boundaries',
         'status'
     ];
 
@@ -27,7 +28,8 @@ class Zone extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'status' => 'string'
+        'status' => 'string',
+        'boundaries' => 'json'
     ];
 
     /**
