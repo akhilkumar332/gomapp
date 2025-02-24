@@ -23,7 +23,7 @@
                     <h2 class="text-lg font-semibold">Branding Settings</h2>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
 
                         <div class="mb-4">
