@@ -111,14 +111,33 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="contact_number" class="form-label">Contact Number</label>
+                            <label for="contact_number" class="form-label required">Contact Number</label>
                             <input type="text" 
                                    class="form-control @error('contact_number') is-invalid @enderror" 
                                    id="contact_number" 
                                    name="contact_number" 
                                    value="{{ old('contact_number') }}"
-                                   placeholder="e.g., +233 XX XXX XXXX">
+                                   placeholder="e.g., +233 XX XXX XXXX"
+                                   required>
                             @error('contact_number')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label required">Priority</label>
+                            <select class="form-select @error('priority') is-invalid @enderror" 
+                                    id="priority" 
+                                    name="priority" 
+                                    required>
+                                <option value="">Select Priority</option>
+                                <option value="1" {{ old('priority') == '1' ? 'selected' : '' }}>1 - Highest</option>
+                                <option value="2" {{ old('priority') == '2' ? 'selected' : '' }}>2 - High</option>
+                                <option value="3" {{ old('priority') == '3' ? 'selected' : '' }}>3 - Medium</option>
+                                <option value="4" {{ old('priority') == '4' ? 'selected' : '' }}>4 - Low</option>
+                                <option value="5" {{ old('priority') == '5' ? 'selected' : '' }}>5 - Lowest</option>
+                            </select>
+                            @error('priority')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
