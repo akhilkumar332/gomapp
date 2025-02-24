@@ -35,8 +35,10 @@ class ReportController extends Controller
                 $query->whereDate('completed_at', '>=', now()->subDays(30))
                     ->where('payment_received', true);
             }], 'payment_amount_received')
-            ->having('completed_locations_count', '>', 0)
-            ->get();
+            ->get()
+            ->filter(function ($driver) {
+                return $driver->completed_locations_count > 0;
+            });
 
         $zones = Zone::with(['locations' => function ($query) {
             $query->where('status', 'completed')
@@ -84,8 +86,10 @@ class ReportController extends Controller
                 $query->whereMonth('completed_at', $now->month)
                     ->where('payment_received', true);
             }], 'payment_amount_received')
-            ->having('completed_locations_count', '>', 0)
-            ->get();
+            ->get()
+            ->filter(function ($driver) {
+                return $driver->completed_locations_count > 0;
+            });
 
         // Get zone statistics
         $zoneStats = Zone::withCount(['locations' => function ($query) use ($now) {
