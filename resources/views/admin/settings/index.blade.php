@@ -23,7 +23,7 @@
                     <h2 class="text-lg font-semibold">Branding Settings</h2>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <form action="{{ route('admin.settings.branding') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
 
                         <div class="mb-4">
@@ -63,12 +63,26 @@
                         </div>
 
                         <div class="mb-4">
+                            <label for="accent_color" class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                            <input type="color" 
+                                   class="h-10 p-1 rounded border border-gray-300 @error('accent_color') border-red-500 @enderror" 
+                                   id="accent_color" 
+                                   name="accent_color" 
+                                   value="{{ old('accent_color', $settings['branding']['accent_color'] ?? '#28a745') }}">
+                            @error('accent_color')
+                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
                             <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
                             @if(isset($settings['branding']['logo_url']))
                                 <div class="mb-2">
-                                    <img src="{{ $settings['branding']['logo_url'] }}" 
+                                    <img src="{{ asset($settings['branding']['logo_url']) }}" 
                                          alt="Current Logo" 
-                                         class="max-h-24 rounded">
+                                         class="max-h-24 rounded"
+                                         onerror="this.onerror=null; this.src='{{ asset('images/placeholder.png') }}';">
+                                    <p class="text-sm text-gray-500 mt-1">Current Logo</p>
                                 </div>
                             @endif
                             <input type="file" 
@@ -85,9 +99,11 @@
                             <label for="favicon" class="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
                             @if(isset($settings['branding']['favicon_url']))
                                 <div class="mb-2">
-                                    <img src="{{ $settings['branding']['favicon_url'] }}" 
+                                    <img src="{{ asset($settings['branding']['favicon_url']) }}" 
                                          alt="Current Favicon" 
-                                         class="max-h-8 rounded">
+                                         class="max-h-8 rounded"
+                                         onerror="this.onerror=null; this.src='{{ asset('images/placeholder.png') }}';">
+                                    <p class="text-sm text-gray-500 mt-1">Current Favicon</p>
                                 </div>
                             @endif
                             <input type="file" 
