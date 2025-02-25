@@ -165,19 +165,26 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('login') }}" id="login-form">
                 @csrf
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                           id="email" name="email" value="{{ old('email') }}" required autofocus>
+                           id="email" name="email" value="{{ old('email') }}" 
+                           autocomplete="username" required autofocus>
+                    @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                           id="password" name="password" required>
+                           id="password" name="password" autocomplete="current-password" required>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-4">
@@ -189,8 +196,11 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    Log In
+                <button type="submit" class="btn btn-primary w-100">
+                    <span class="d-flex align-items-center justify-content-center">
+                        <span>Log In</span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </span>
                 </button>
 
                 @if(config('services.firebase.enabled'))
@@ -208,6 +218,32 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('login-form');
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            form.addEventListener('submit', function(e) {
+                // Get spinner element
+                const spinner = submitButton.querySelector('.spinner-border');
+                const buttonText = submitButton.querySelector('span:not(.spinner-border)');
+                
+                // Disable button and show loading state
+                submitButton.disabled = true;
+                spinner.classList.remove('d-none');
+                buttonText.textContent = 'Logging in...';
+            });
+
+            // Show any error messages
+            const errorContainer = document.querySelector('.alert-danger');
+            if (errorContainer) {
+                errorContainer.setAttribute('role', 'alert');
+                errorContainer.setAttribute('aria-live', 'polite');
+            }
+        });
+    </script>
+
     @if(config('services.firebase.enabled'))
         <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-auth.js"></script>

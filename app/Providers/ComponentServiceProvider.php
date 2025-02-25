@@ -26,5 +26,6 @@ class ComponentServiceProvider extends ServiceProvider
         Blade::component('components.responsive-nav-link', 'responsive-nav-link');
         Blade::component('components.dropdown', 'dropdown');
         Blade::component('components.dropdown-link', 'dropdown-link');
+        Blade::component('components.loading-spinner', 'loading-spinner');
     }
 }

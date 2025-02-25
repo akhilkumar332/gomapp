@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\DriverMiddleware;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    public const HOME = '/admin/dashboard';
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.
@@ -34,21 +36,33 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // Web Routes
+            // Web Routes (Auth and Public Routes)
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            // Admin Routes
-            Route::middleware('web')
-                ->prefix('admin')
-                ->name('admin.')
+            // Admin API Routes
+            Route::middleware(['api', 'auth:sanctum'])
+                ->prefix('api/admin')
+                ->name('admin.api.')
                 ->group(base_path('routes/admin.php'));
 
+            // Admin Web Routes
+            Route::middleware(['web', 'auth', AdminMiddleware::class])
+                ->prefix('admin')
+                ->name('admin.')
+                ->group(base_path('routes/web_admin.php'));
+
             // Driver Routes
-            Route::middleware('web')
+            Route::middleware(['web', 'auth', DriverMiddleware::class])
                 ->prefix('driver')
                 ->name('driver.')
                 ->group(base_path('routes/driver.php'));
+
+            // Debug Routes (only in local environment)
+            if (app()->environment('local')) {
+                Route::middleware('web')
+                    ->group(base_path('routes/debug.php'));
+            }
         });
     }
 }

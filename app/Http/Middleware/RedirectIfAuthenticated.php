@@ -24,15 +24,14 @@ class RedirectIfAuthenticated
                 // Redirect based on user role
                 $user = Auth::guard($guard)->user();
                 
-                if ($user->role === 'admin') {
-                    return redirect()->route('admin.dashboard');
-                }
-                
-                if ($user->role === 'driver') {
-                    return redirect()->route('driver.dashboard');
-                }
+                // Get secure redirect URL based on role
+                $redirectUrl = match($user->role) {
+                    'admin' => url()->secure(route('admin.dashboard', [], false)),
+                    'driver' => url()->secure(route('driver.dashboard', [], false)),
+                    default => url()->secure(RouteServiceProvider::HOME),
+                };
 
-                return redirect(RouteServiceProvider::HOME);
+                return redirect()->to($redirectUrl);
             }
         }
 

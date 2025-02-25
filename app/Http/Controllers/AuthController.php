@@ -35,36 +35,59 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            $user = Auth::user();
+        try {
+            // Regenerate session ID before login attempt
+            $request->session()->regenerate();
 
-            // Create login log
-            LoginLog::create([
-                'user_id' => $user->id,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'status' => 'success'
-            ]);
+            if (Auth::attempt($credentials, $request->filled('remember'))) {
+                $user = Auth::user();
 
-            // Redirect based on role
-            if ($user->isAdmin()) {
-                return redirect()->intended(route('admin.dashboard'));
-            } else {
-                return redirect()->intended(route('driver.dashboard'));
+                // Create login log
+                try {
+                    LoginLog::create([
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'status' => 'success',
+                        'login_at' => now()
+                    ]);
+                } catch (\Exception $e) {
+                    report($e); // Log the error but don't let it affect login
+                }
+
+                // Regenerate session ID after successful login
+                $request->session()->regenerate();
+
+                // Redirect based on role
+                $redirectRoute = $user->isAdmin() ? 'admin.dashboard' : 'driver.dashboard';
+                return redirect()->intended(route($redirectRoute));
             }
+
+            // Log failed login attempt
+            try {
+                LoginLog::create([
+                    'email' => $request->email,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'status' => 'failed',
+                    'login_at' => now()
+                ]);
+            } catch (\Exception $e) {
+                report($e); // Log the error but don't let it affect login response
+            }
+
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.failed')],
+            ]);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            report($e);
+            throw ValidationException::withMessages([
+                'email' => ['An error occurred during login.'],
+            ]);
         }
-
-        // Log failed login attempt
-        LoginLog::create([
-            'email' => $request->email,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'status' => 'failed'
-        ]);
-
-        throw ValidationException::withMessages([
-            'email' => [trans('auth.failed')],
-        ]);
     }
 
     public function logout(Request $request)

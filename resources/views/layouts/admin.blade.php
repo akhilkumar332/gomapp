@@ -147,6 +147,12 @@
         .dropdown-item.active, .dropdown-item:active {
             background-color: var(--primary-color);
         }
+
+        /* Fix for chart container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
     </style>
 
     @stack('styles')
@@ -219,7 +225,7 @@
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ url()->secure(route('logout', [], false)) }}">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="mdi mdi-logout me-2"></i> Logout
@@ -241,7 +247,29 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Initialize Bootstrap Components -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize dropdowns
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+            dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize popovers
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        });
+    </script>
 
     @stack('scripts')
 </body>

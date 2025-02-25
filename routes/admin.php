@@ -29,7 +29,10 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/activities', [DashboardController::class, 'activities']);
+    });
 
     // Driver Management
     Route::apiResource('drivers', DriverController::class);

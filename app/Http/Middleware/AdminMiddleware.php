@@ -32,11 +32,18 @@ class AdminMiddleware
             return redirect()->route('login')->with('error', 'Unauthorized. Admin access required.');
         }
 
-        // Log admin activity
-        ActivityLog::log(
-            'admin_route_access',
-            'Admin route accessed: ' . $request->route()->getName()
-        );
+        // Log admin activity only if the route has a name
+        try {
+            if ($request->route() && $request->route()->getName()) {
+                ActivityLog::log(
+                    'admin_route_access',
+                    'Admin route accessed: ' . $request->route()->getName()
+                );
+            }
+        } catch (\Exception $e) {
+            // Log silently failed, continue with the request
+            report($e);
+        }
 
         return $next($request);
     }
