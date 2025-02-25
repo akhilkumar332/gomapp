@@ -1,130 +1,185 @@
-<x-app-layout>
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">Export Reports</h1>
-            <div class="flex space-x-2">
-                <a href="{{ route('admin.reports.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                    Back to Reports
-                </a>
-            </div>
-        </div>
+@extends('layouts.admin')
 
-        <!-- Monthly Statistics -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold">Monthly Statistics</h2>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-gray-50 p-4 rounded">
-                        <div class="text-sm text-gray-500">Total Deliveries</div>
-                        <div class="text-2xl font-semibold">{{ $monthlyStats['total_deliveries'] }}</div>
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Export Reports</h5>
+            <a href="{{ route('admin.reports.index') }}" class="btn btn-secondary">
+                <i class="mdi mdi-arrow-left me-1"></i>Back to Reports
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Delivery Report Export -->
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">Delivery Report</h6>
+                            <p class="text-muted mb-4">Export delivery data including status, time, and location details.</p>
+                            
+                            <form action="{{ route('admin.reports.export.deliveries') }}" method="POST">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Date Range</label>
+                                    <div class="input-group">
+                                        <input type="date" class="form-control" name="start_date" required>
+                                        <span class="input-group-text">to</span>
+                                        <input type="date" class="form-control" name="end_date" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Format</label>
+                                    <select class="form-select" name="format">
+                                        <option value="csv">CSV</option>
+                                        <option value="xlsx">Excel (XLSX)</option>
+                                        <option value="pdf">PDF</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Include Fields</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="fields[]" value="driver_details" checked>
+                                        <label class="form-check-label">Driver Details</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="fields[]" value="location_details" checked>
+                                        <label class="form-check-label">Location Details</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="fields[]" value="collection_details" checked>
+                                        <label class="form-check-label">Collection Details</label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="mdi mdi-download me-1"></i>Export Delivery Report
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded">
-                        <div class="text-sm text-gray-500">Completed Deliveries</div>
-                        <div class="text-2xl font-semibold">{{ $monthlyStats['completed_deliveries'] }}</div>
+                </div>
+
+                <!-- Collection Report Export -->
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">Collection Report</h6>
+                            <p class="text-muted mb-4">Export collection data including amounts, dates, and location details.</p>
+                            
+                            <form action="{{ route('admin.reports.export.collections') }}" method="POST">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Date Range</label>
+                                    <div class="input-group">
+                                        <input type="date" class="form-control" name="start_date" required>
+                                        <span class="input-group-text">to</span>
+                                        <input type="date" class="form-control" name="end_date" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Format</label>
+                                    <select class="form-select" name="format">
+                                        <option value="csv">CSV</option>
+                                        <option value="xlsx">Excel (XLSX)</option>
+                                        <option value="pdf">PDF</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Group By</label>
+                                    <select class="form-select" name="group_by">
+                                        <option value="date">Date</option>
+                                        <option value="zone">Zone</option>
+                                        <option value="driver">Driver</option>
+                                        <option value="location">Location</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="mdi mdi-download me-1"></i>Export Collection Report
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 p-4 rounded">
-                        <div class="text-sm text-gray-500">Total Collections</div>
-                        <div class="text-2xl font-semibold">¢{{ number_format($monthlyStats['total_collections'], 2) }}</div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded">
-                        <div class="text-sm text-gray-500">Active Drivers</div>
-                        <div class="text-2xl font-semibold">{{ $monthlyStats['active_drivers'] }}</div>
+                </div>
+
+                <!-- Export History -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Recent Exports</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Report Type</th>
+                                            <th>Format</th>
+                                            <th>Generated By</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($recentExports as $export)
+                                        <tr>
+                                            <td>{{ $export->created_at->format('M d, Y H:i A') }}</td>
+                                            <td>{{ ucfirst($export->type) }} Report</td>
+                                            <td>{{ strtoupper($export->format) }}</td>
+                                            <td>{{ $export->user->name }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ $export->status_color }}">
+                                                    {{ ucfirst($export->status) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($export->status === 'completed')
+                                                <a href="{{ route('admin.reports.download', $export) }}" class="btn btn-sm btn-primary">
+                                                    <i class="mdi mdi-download"></i>
+                                                </a>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Driver Performance -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold">Driver Performance</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Driver
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Completed Deliveries
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total Collections
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($driverPerformance as $driver)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $driver->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $driver->email }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $driver->completed_locations_count }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ¢{{ number_format($driver->completed_locations_sum_payment_amount_received ?? 0, 2) }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No driver performance data available
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Zone Statistics -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold">Zone Statistics</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Zone
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total Locations
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total Collections
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($zoneStats as $zone)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ $zone->name }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $zone->locations_count }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    ¢{{ number_format($zone->locations_sum_payment_amount_received ?? 0, 2) }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No zone statistics available
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
-</x-app-layout>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    // Format dates for input fields
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+    };
+
+    // Set default date ranges for both forms
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        if (input.name === 'start_date') {
+            input.value = formatDate(thirtyDaysAgo);
+        } else if (input.name === 'end_date') {
+            input.value = formatDate(today);
+        }
+    });
+});
+</script>
+@endpush
+@endsection

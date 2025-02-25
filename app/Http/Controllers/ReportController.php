@@ -13,7 +13,20 @@ class ReportController extends Controller
 {
     public function index()
     {
-        return view('admin.reports.index');
+        $totalDeliveries = Location::count();
+        $totalCollections = Location::where('payment_received', true)->sum('payment_amount_received');
+        $activeDrivers = User::where('role', 'driver')
+            ->whereNotNull('last_location_update')
+            ->where('last_location_update', '>=', now()->subHour())
+            ->count();
+        $totalLocations = Location::count();
+
+        return view('admin.reports.index', compact(
+            'totalDeliveries',
+            'totalCollections',
+            'activeDrivers',
+            'totalLocations'
+        ));
     }
 
     public function activity()

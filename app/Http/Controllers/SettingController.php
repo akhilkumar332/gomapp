@@ -10,6 +10,7 @@ class SettingController extends Controller
 {
     public function index()
     {
+        $timezones = \DateTimeZone::listIdentifiers();
         $settings = AppSetting::all()->pluck('value', 'key')->toArray();
         $settings = [
             'branding' => [
@@ -22,7 +23,7 @@ class SettingController extends Controller
             ]
         ];
 
-        return view('admin.settings.index', compact('settings'));
+        return view('admin.settings.index', compact('settings', 'timezones'));
     }
 
     public function update(Request $request)

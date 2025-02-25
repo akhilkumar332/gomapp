@@ -1,70 +1,119 @@
-<x-app-layout>
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">Activity Log</h1>
-            <div class="flex space-x-2">
-                <a href="{{ route('admin.reports.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                    Back to Reports
+@extends('layouts.admin')
+
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Activity Log</h5>
+            <div>
+                <button class="btn btn-primary me-2" onclick="refreshActivities()">
+                    <i class="mdi mdi-refresh me-1"></i>Refresh
+                </button>
+                <a href="{{ route('admin.reports.index') }}" class="btn btn-secondary">
+                    <i class="mdi mdi-arrow-left me-1"></i>Back to Reports
                 </a>
             </div>
         </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary {{ request('type') == 'all' || !request('type') ? 'active' : '' }}" 
+                                onclick="filterActivities('all')">All</button>
+                        <button type="button" class="btn btn-outline-primary {{ request('type') == 'user' ? 'active' : '' }}" 
+                                onclick="filterActivities('user')">User Activities</button>
+                        <button type="button" class="btn btn-outline-primary {{ request('type') == 'system' ? 'active' : '' }}" 
+                                onclick="filterActivities('system')">System Events</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search" placeholder="Search activities..." 
+                               value="{{ request('search') }}">
+                        <button class="btn btn-primary" onclick="searchActivities()">
+                            <i class="mdi mdi-magnify"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Time
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            User
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Action
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Details
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($activities as $activity)
+            <!-- Activity Table -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $activity->created_at->format('M d, Y H:i:s') }}
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($activities as $activity)
+                        <tr>
+                            <td>{{ $activity->created_at->format('M d, Y H:i:s') }}</td>
+                            <td>
+                                @if($activity->user)
+                                    {{ $activity->user->name }}
+                                @else
+                                    <span class="text-muted">System</span>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {{ $activity->user->name ?? 'System' }}
-                                    </div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ $activity->user->email ?? '' }}
-                                    </div>
-                                </div>
+                            <td>{{ $activity->action }}</td>
+                            <td>
+                                <span class="text-wrap">{{ $activity->description }}</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {{ $activity->action }}
+                            <td>
+                                <span class="badge bg-{{ $activity->status_color }}">
+                                    {{ ucfirst($activity->status) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-500">
-                                {{ $activity->description }}
+                            <td>
+                                <span class="text-muted">{{ $activity->ip_address }}</span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                                No activity logs found
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="mt-4">
-            {{ $activities->links() }}
+            <!-- Pagination -->
+            <div class="mt-4">
+                {{ $activities->links() }}
+            </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+
+@push('scripts')
+<script>
+function filterActivities(type) {
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('type', type);
+    window.location.href = currentUrl.toString();
+}
+
+function searchActivities() {
+    const searchTerm = document.getElementById('search').value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('search', searchTerm);
+    window.location.href = currentUrl.toString();
+}
+
+function refreshActivities() {
+    window.location.reload();
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+@endpush
+@endsection

@@ -1,82 +1,122 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Reports & Analytics</h2>
+@extends('layouts.admin')
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Activity Report -->
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-medium text-gray-900">Activity Log</h3>
-                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-sm text-gray-500 mb-4">Track all system activities including deliveries, payments, and user actions.</p>
-                            <a href="{{ route('admin.reports.activity') }}" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                                View Activity Log
-                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
+@section('content')
+<div class="container-fluid">
+    <div class="row g-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-truck-delivery text-primary" style="font-size: 24px;"></i>
+                            </span>
                         </div>
-
-                        <!-- Performance Report -->
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-medium text-gray-900">Performance Metrics</h3>
-                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-sm text-gray-500 mb-4">Analyze driver performance, delivery success rates, and zone efficiency.</p>
-                            <a href="{{ route('admin.reports.performance') }}" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                                View Performance Report
-                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
-                        </div>
-
-                        <!-- Export Report -->
-                        <div class="bg-white p-6 rounded-lg shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-medium text-gray-900">Export Data</h3>
-                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-sm text-gray-500 mb-4">Generate and download comprehensive reports in various formats.</p>
-                            <a href="{{ route('admin.reports.export') }}" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                                Export Reports
-                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $totalDeliveries }}</h3>
+                            <p class="text-muted mb-0">Total Deliveries</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Quick Stats -->
-                    <div class="mt-8">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Statistics</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="text-sm font-medium text-gray-500">Today's Deliveries</div>
-                                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ $todayDeliveries ?? 0 }}</div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-currency-usd text-success" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">₵{{ number_format($totalCollections, 2) }}</h3>
+                            <p class="text-muted mb-0">Total Collections</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-info bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-account-multiple text-info" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $activeDrivers }}</h3>
+                            <p class="text-muted mb-0">Active Drivers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-warning bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-map-marker text-warning" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1">{{ $totalLocations }}</h3>
+                            <p class="text-muted mb-0">Total Locations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Available Reports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">Performance Report</h6>
+                                    <p class="card-text text-muted">View detailed performance metrics for drivers and zones.</p>
+                                    <a href="{{ route('admin.reports.performance') }}" class="btn btn-primary">
+                                        <i class="mdi mdi-chart-bar me-1"></i>View Report
+                                    </a>
+                                </div>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="text-sm font-medium text-gray-500">Active Drivers</div>
-                                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ $activeDrivers ?? 0 }}</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">Activity Log</h6>
+                                    <p class="card-text text-muted">Track all system activities and user actions.</p>
+                                    <a href="{{ route('admin.reports.activity') }}" class="btn btn-primary">
+                                        <i class="mdi mdi-history me-1"></i>View Activities
+                                    </a>
+                                </div>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="text-sm font-medium text-gray-500">Success Rate</div>
-                                <div class="mt-1 text-2xl font-semibold text-gray-900">{{ $successRate ?? '0%' }}</div>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg">
-                                <div class="text-sm font-medium text-gray-500">Total Collections</div>
-                                <div class="mt-1 text-2xl font-semibold text-gray-900">₵{{ number_format($totalCollections ?? 0, 2) }}</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">Export Data</h6>
+                                    <p class="card-text text-muted">Export delivery and collection data to CSV/Excel.</p>
+                                    <a href="{{ route('admin.reports.export') }}" class="btn btn-primary">
+                                        <i class="mdi mdi-download me-1"></i>Export Reports
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -84,4 +124,5 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

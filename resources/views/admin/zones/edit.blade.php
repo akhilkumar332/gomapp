@@ -1,103 +1,88 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-900">Edit Zone: {{ $zone->name }}</h2>
-                        <a href="{{ route('admin.zones.index') }}" class="text-indigo-600 hover:text-indigo-900">
-                            Back to Zones
-                        </a>
-                    </div>
+@extends('layouts.admin')
 
-                    <form action="{{ route('admin.zones.update', $zone) }}" method="POST" class="space-y-6">
-                        @csrf
-                        @method('PUT')
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Edit Zone</h5>
+            <a href="{{ route('admin.zones.index') }}" class="btn btn-secondary">
+                <i class="mdi mdi-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('admin.zones.update', $zone) }}" method="POST">
+                @csrf
+                @method('PUT')
 
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Zone Name</label>
-                            <input type="text" name="name" id="name" value="{{ old('name', $zone->name) }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Zone Name</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                   id="name" name="name" value="{{ old('name', $zone->name) }}" required>
                             @error('name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" rows="3"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $zone->description) }}</textarea>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                                      id="description" name="description" rows="4">{{ old('description', $zone->description) }}</textarea>
                             @error('description')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="boundaries" class="block text-sm font-medium text-gray-700">Boundaries (GeoJSON)</label>
-                            <textarea name="boundaries" id="boundaries" rows="4" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('boundaries', $zone->boundaries) }}</textarea>
-                            <p class="mt-1 text-sm text-gray-500">Enter the zone boundaries in GeoJSON format</p>
-                            @error('boundaries')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                            <select name="status" id="status" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select @error('status') is-invalid @enderror" 
+                                    id="status" name="status">
                                 <option value="active" {{ old('status', $zone->status) === 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $zone->status) === 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                             @error('status')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
 
-                        <div class="flex justify-end space-x-3">
-                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
-                                Update Zone
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Drivers</h3>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($zone->drivers as $driver)
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900">{{ $driver->name }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-500">{{ $driver->email }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-500">{{ $driver->phone_number }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $driver->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ ucfirst($driver->status) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Zone Information</h6>
+                                <p class="card-text text-muted">
+                                    This zone currently has:
+                                </p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-map-marker text-primary me-2"></i>
+                                        {{ $zone->locations_count }} Locations
+                                    </li>
+                                    <li>
+                                        <i class="mdi mdi-account-multiple text-success me-2"></i>
+                                        {{ $zone->drivers_count }} Active Drivers
+                                    </li>
+                                </ul>
+                                <hr>
+                                <p class="card-text small text-muted mb-0">
+                                    Last updated: {{ $zone->updated_at->format('M d, Y H:i A') }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="mdi mdi-content-save me-1"></i>Save Changes
+                    </button>
+                    <a href="{{ route('admin.zones.show', $zone) }}" class="btn btn-secondary ms-2">
+                        <i class="mdi mdi-cancel me-1"></i>Cancel
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

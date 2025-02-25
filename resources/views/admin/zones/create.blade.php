@@ -1,66 +1,88 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-900">Create New Zone</h2>
-                        <a href="{{ route('admin.zones.index') }}" class="text-indigo-600 hover:text-indigo-900">
-                            Back to Zones
-                        </a>
-                    </div>
+@extends('layouts.admin')
 
-                    <form action="{{ route('admin.zones.store') }}" method="POST" class="space-y-6">
-                        @csrf
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Create New Zone</h5>
+            <a href="{{ route('admin.zones.index') }}" class="btn btn-secondary">
+                <i class="mdi mdi-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('admin.zones.store') }}" method="POST">
+                @csrf
 
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Zone Name</label>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Zone Name</label>
+                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                   id="name" name="name" value="{{ old('name') }}" required>
                             @error('name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" rows="3"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description') }}</textarea>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                                      id="description" name="description" rows="4">{{ old('description') }}</textarea>
                             @error('description')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div>
-                            <label for="boundaries" class="block text-sm font-medium text-gray-700">Boundaries (GeoJSON)</label>
-                            <textarea name="boundaries" id="boundaries" rows="4" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('boundaries') }}</textarea>
-                            <p class="mt-1 text-sm text-gray-500">Enter the zone boundaries in GeoJSON format</p>
-                            @error('boundaries')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                            <select name="status" id="status" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select @error('status') is-invalid @enderror" 
+                                    id="status" name="status">
                                 <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                             @error('status')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
 
-                        <div class="flex justify-end">
-                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
-                                Create Zone
-                            </button>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Zone Guidelines</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-information text-primary me-2"></i>
+                                        Create zones to organize delivery locations effectively
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-map-marker text-success me-2"></i>
+                                        You can add locations to this zone after creation
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-account-multiple text-info me-2"></i>
+                                        Assign drivers to manage deliveries in this zone
+                                    </li>
+                                    <li>
+                                        <i class="mdi mdi-alert text-warning me-2"></i>
+                                        Ensure the zone name is unique and descriptive
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="mdi mdi-plus-circle me-1"></i>Create Zone
+                    </button>
+                    <a href="{{ route('admin.zones.index') }}" class="btn btn-secondary ms-2">
+                        <i class="mdi mdi-cancel me-1"></i>Cancel
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

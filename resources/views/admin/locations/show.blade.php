@@ -1,66 +1,143 @@
-<x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-900">Location Details</h2>
-                        <div>
-                            <a href="{{ route('admin.locations.edit', $location) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 mr-2">
-                                Edit Location
-                            </a>
-                            <a href="{{ route('admin.locations.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                                Back to List
-                            </a>
+@extends('layouts.admin')
+
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Location Details</h5>
+            <div>
+                <a href="{{ route('admin.locations.edit', $location) }}" class="btn btn-primary me-2">
+                    <i class="mdi mdi-pencil me-1"></i>Edit Location
+                </a>
+                <a href="{{ route('admin.locations.index') }}" class="btn btn-secondary">
+                    <i class="mdi mdi-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="mb-3">Basic Information</h6>
+                    <table class="table">
+                        <tr>
+                            <th style="width: 150px;">Name:</th>
+                            <td>{{ $location->name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Address:</th>
+                            <td>{{ $location->address }}</td>
+                        </tr>
+                        <tr>
+                            <th>Zone:</th>
+                            <td>
+                                @if($location->zone)
+                                    <a href="{{ route('admin.zones.show', $location->zone) }}" class="text-decoration-none">
+                                        {{ $location->zone->name }}
+                                    </a>
+                                @else
+                                    <span class="text-muted">No Zone Assigned</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge {{ $location->status === 'active' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ ucfirst($location->status) }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Created At:</th>
+                            <td>{{ $location->created_at->format('M d, Y H:i A') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Updated:</th>
+                            <td>{{ $location->updated_at->format('M d, Y H:i A') }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    <h6 class="mb-3">Statistics</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="card bg-primary bg-opacity-10 h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="mdi mdi-truck-delivery text-primary" style="font-size: 24px;"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h3 class="mb-1">{{ $location->deliveries_count ?? 0 }}</h3>
+                                            <p class="text-muted mb-0">Total Deliveries</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="card bg-success bg-opacity-10 h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="mdi mdi-currency-usd text-success" style="font-size: 24px;"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h3 class="mb-1">₵{{ number_format($location->total_collections ?? 0, 2) }}</h3>
+                                            <p class="text-muted mb-0">Total Collections</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                        <div class="px-4 py-5 sm:px-6">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                {{ $location->shop_name }}
-                            </h3>
-                            <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                                Ghana Post GPS Code: {{ $location->ghana_post_gps_code }}
-                            </p>
-                        </div>
-                        <div class="border-t border-gray-200">
-                            <dl>
-                                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Zone</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $location->zone->name }}</dd>
-                                </div>
-                                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Address</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $location->address }}</dd>
-                                </div>
-                                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Contact Number</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $location->contact_number }}</dd>
-                                </div>
-                                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Status</dt>
-                                    <dd class="mt-1 text-sm sm:mt-0 sm:col-span-2">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $location->status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                               ($location->status === 'active' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800') }}">
-                                            {{ ucfirst($location->status) }}
-                                        </span>
-                                    </dd>
-                                </div>
-                                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Priority</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                        @for($i = 0; $i < $location->priority; $i++)
-                                            ⭐
-                                        @endfor
-                                    </dd>
-                                </div>
-                            </dl>
+                    @if($location->notes)
+                    <div class="mt-4">
+                        <h6 class="mb-3">Additional Notes</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ $location->notes }}
+                            </div>
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
+
+            @if($location->deliveries && $location->deliveries->count() > 0)
+            <div class="mt-4">
+                <h6 class="mb-3">Recent Deliveries</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th>Collection</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($location->deliveries->take(5) as $delivery)
+                            <tr>
+                                <td>{{ $delivery->created_at->format('M d, Y H:i A') }}</td>
+                                <td>{{ $delivery->driver->name }}</td>
+                                <td>
+                                    <span class="badge {{ $delivery->status === 'completed' ? 'bg-success' : 'bg-warning' }}">
+                                        {{ ucfirst($delivery->status) }}
+                                    </span>
+                                </td>
+                                <td>₵{{ number_format($delivery->collection_amount, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

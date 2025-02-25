@@ -1,127 +1,180 @@
-<x-app-layout>
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">Application Settings</h1>
+@extends('layouts.admin')
+
+@section('content')
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Application Settings</h5>
         </div>
+        <div class="card-body">
+            <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
 
-        @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <span class="block sm:inline">{{ session('success') }}</span>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <span class="block sm:inline">{{ session('error') }}</span>
-            </div>
-        @endif
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Branding Settings -->
-            <div class="bg-white rounded-lg shadow">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold">Branding Settings</h2>
-                </div>
-                <div class="p-6">
-                    <form action="{{ route('admin.settings.branding') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                        @csrf
-
-                        <div class="mb-4">
-                            <label for="app_name" class="block text-sm font-medium text-gray-700 mb-1">Application Name</label>
-                            <input type="text" 
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('app_name') border-red-500 @enderror" 
-                                   id="app_name" 
-                                   name="app_name" 
-                                   value="{{ old('app_name', $settings['branding']['app_name'] ?? config('app.name')) }}">
+                <div class="row">
+                    <!-- General Settings -->
+                    <div class="col-md-6">
+                        <h6 class="mb-3">General Settings</h6>
+                        
+                        <div class="mb-3">
+                            <label for="app_name" class="form-label">Application Name</label>
+                            <input type="text" class="form-control @error('app_name') is-invalid @enderror" 
+                                   id="app_name" name="app_name" value="{{ old('app_name', $settings['branding']['app_name']) }}">
                             @error('app_name')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="mb-4">
-                            <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
-                            <input type="color" 
-                                   class="h-10 p-1 rounded border border-gray-300 @error('primary_color') border-red-500 @enderror" 
-                                   id="primary_color" 
-                                   name="primary_color" 
-                                   value="{{ old('primary_color', $settings['branding']['primary_color'] ?? '#007bff') }}">
-                            @error('primary_color')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <div class="mb-3">
+                            <label for="company_name" class="form-label">Company Name</label>
+                            <input type="text" class="form-control @error('company_name') is-invalid @enderror" 
+                                   id="company_name" name="company_name" value="{{ old('company_name', $settings['branding']['company_name'] ?? '') }}">
+                            @error('company_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="mb-4">
-                            <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
-                            <input type="color" 
-                                   class="h-10 p-1 rounded border border-gray-300 @error('secondary_color') border-red-500 @enderror" 
-                                   id="secondary_color" 
-                                   name="secondary_color" 
-                                   value="{{ old('secondary_color', $settings['branding']['secondary_color'] ?? '#6c757d') }}">
-                            @error('secondary_color')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <div class="mb-3">
+                            <label for="contact_email" class="form-label">Contact Email</label>
+                            <input type="email" class="form-control @error('contact_email') is-invalid @enderror" 
+                                   id="contact_email" name="contact_email" value="{{ old('contact_email', $settings['branding']['contact_email'] ?? '') }}">
+                            @error('contact_email')
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="mb-4">
-                            <label for="accent_color" class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
-                            <input type="color" 
-                                   class="h-10 p-1 rounded border border-gray-300 @error('accent_color') border-red-500 @enderror" 
-                                   id="accent_color" 
-                                   name="accent_color" 
-                                   value="{{ old('accent_color', $settings['branding']['accent_color'] ?? '#28a745') }}">
-                            @error('accent_color')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                        <div class="mb-3">
+                            <label for="contact_phone" class="form-label">Contact Phone</label>
+                            <input type="text" class="form-control @error('contact_phone') is-invalid @enderror" 
+                                   id="contact_phone" name="contact_phone" value="{{ old('contact_phone', $settings['branding']['contact_phone'] ?? '') }}">
+                            @error('contact_phone')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- System Settings -->
+                    <div class="col-md-6">
+                        <h6 class="mb-3">System Settings</h6>
+
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label">Timezone</label>
+                            <select class="form-select @error('timezone') is-invalid @enderror" 
+                                    id="timezone" name="timezone">
+                                @foreach($timezones as $tz)
+                                    <option value="{{ $tz }}" {{ old('timezone', $settings['branding']['timezone'] ?? '') === $tz ? 'selected' : '' }}>
+                                        {{ $tz }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('timezone')
+                                <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="mb-4">
-                            <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                            @if(isset($settings['branding']['logo_url']))
-                                <div class="mb-2">
-                                    <img src="{{ asset($settings['branding']['logo_url']) }}" 
-                                         alt="Current Logo" 
-                                         class="max-h-24 rounded"
-                                         onerror="this.onerror=null; this.src='{{ asset('images/placeholder.png') }}';">
-                                    <p class="text-sm text-gray-500 mt-1">Current Logo</p>
+                        <div class="mb-3">
+                            <label for="date_format" class="form-label">Date Format</label>
+                            <select class="form-select @error('date_format') is-invalid @enderror" 
+                                    id="date_format" name="date_format">
+                                <option value="Y-m-d" {{ old('date_format', $settings['branding']['date_format'] ?? '') === 'Y-m-d' ? 'selected' : '' }}>
+                                    YYYY-MM-DD
+                                </option>
+                                <option value="d/m/Y" {{ old('date_format', $settings['branding']['date_format'] ?? '') === 'd/m/Y' ? 'selected' : '' }}>
+                                    DD/MM/YYYY
+                                </option>
+                                <option value="m/d/Y" {{ old('date_format', $settings['branding']['date_format'] ?? '') === 'm/d/Y' ? 'selected' : '' }}>
+                                    MM/DD/YYYY
+                                </option>
+                            </select>
+                            @error('date_format')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-block">System Features</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="enable_notifications" 
+                                       name="enable_notifications" value="1" 
+                                       {{ old('enable_notifications', $settings['branding']['enable_notifications'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="enable_notifications">Enable Notifications</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="enable_auto_assignment" 
+                                       name="enable_auto_assignment" value="1" 
+                                       {{ old('enable_auto_assignment', $settings['branding']['enable_auto_assignment'] ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="enable_auto_assignment">Enable Auto Assignment</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div class="col-12 mt-4">
+                        <h6 class="mb-3">Notification Settings</h6>
+                        
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email Notifications</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="notify_new_delivery" 
+                                                       name="notify_new_delivery" value="1" 
+                                                       {{ old('notify_new_delivery', $settings['branding']['notify_new_delivery'] ?? false) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="notify_new_delivery">New Delivery Assignments</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="notify_delivery_complete" 
+                                                       name="notify_delivery_complete" value="1" 
+                                                       {{ old('notify_delivery_complete', $settings['branding']['notify_delivery_complete'] ?? false) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="notify_delivery_complete">Completed Deliveries</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">SMS Notifications</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="sms_notifications" 
+                                                       name="sms_notifications" value="1" 
+                                                       {{ old('sms_notifications', $settings['branding']['sms_notifications'] ?? false) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="sms_notifications">Enable SMS Notifications</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            @endif
-                            <input type="file" 
-                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 @error('logo') border-red-500 @enderror" 
-                                   id="logo" 
-                                   name="logo" 
-                                   accept="image/*">
-                            @error('logo')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
+                            </div>
                         </div>
-
-                        <div class="mb-4">
-                            <label for="favicon" class="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
-                            @if(isset($settings['branding']['favicon_url']))
-                                <div class="mb-2">
-                                    <img src="{{ asset($settings['branding']['favicon_url']) }}" 
-                                         alt="Current Favicon" 
-                                         class="max-h-8 rounded"
-                                         onerror="this.onerror=null; this.src='{{ asset('images/placeholder.png') }}';">
-                                    <p class="text-sm text-gray-500 mt-1">Current Favicon</p>
-                                </div>
-                            @endif
-                            <input type="file" 
-                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 @error('favicon') border-red-500 @enderror" 
-                                   id="favicon" 
-                                   name="favicon" 
-                                   accept="image/x-icon,image/png">
-                            @error('favicon')
-                                <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Update Branding
-                        </button>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="mdi mdi-content-save me-1"></i>Save Settings
+                    </button>
+                    <button type="reset" class="btn btn-secondary ms-2">
+                        <i class="mdi mdi-refresh me-1"></i>Reset
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-</x-app-layout>
+</div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any form elements that need it
+    const form = document.querySelector('form');
+    
+    // Handle form reset
+    form.addEventListener('reset', function(e) {
+        if (!confirm('Are you sure you want to reset all changes?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+@endpush
+@endsection
