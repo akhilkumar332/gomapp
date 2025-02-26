@@ -33,6 +33,11 @@ class DriverController extends Controller
 
         $drivers = $query->latest()->paginate(10)->withQueryString();
 
+        if ($request->ajax()) {
+            $html = view('admin.drivers.partials.driver-list', compact('drivers'))->render();
+            return response()->json(['html' => $html]);
+        }
+
         return view('admin.drivers.index', compact('drivers'));
     }
 

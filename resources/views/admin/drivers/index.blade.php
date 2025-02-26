@@ -10,7 +10,7 @@
             </a>
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.drivers.index') }}" method="GET" class="mb-4">
+            <form id="search-form" action="{{ route('admin.drivers.index') }}" method="GET" class="mb-4">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <input type="text" class="form-control" name="name" 
@@ -29,6 +29,7 @@
                             <option value="">All Status</option>
                             <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -39,7 +40,7 @@
                 </div>
             </form>
 
-            <div class="table-responsive">
+            <div id="driver-list" class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -57,7 +58,7 @@
                                 <td>{{ $driver->email }}</td>
                                 <td>{{ $driver->phone_number }}</td>
                                 <td>
-                                    <span class="badge {{ $driver->status === 'active' ? 'bg-success' : 'bg-danger' }}">
+                                    <span class="badge {{ $driver->status === 'active' ? 'bg-success' : ($driver->status === 'suspended' ? 'bg-warning' : 'bg-danger') }}">
                                         {{ ucfirst($driver->status) }}
                                     </span>
                                 </td>
@@ -88,4 +89,62 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchForm = document.getElementById('search-form');
+        const driverList = document.getElementById('driver-list');
+
+        function ensureHttps(url) {
+            // Create a URL object
+            const urlObj = new URL(url, window.location.origin);
+            // Force HTTPS
+            urlObj.protocol = 'https:';
+            return urlObj.toString();
+        }
+
+        function performSearch(url) {
+            driverList.innerHTML = '<div class="text-center py-4">Loading...</div>';
+            
+            // Ensure HTTPS URL
+            const secureUrl = ensureHttps(url);
+            
+            fetch(secureUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Response status:', response.status);
+                    throw new Error('Network response was not OK');
+                }
+                return response.json();
+            })
+            .then(data => {
+                driverList.innerHTML = data.html;
+            })
+            .catch(error => {
+                driverList.innerHTML = '<div class="text-danger text-center py-4">An error occurred. Please try again.</div>';
+                console.error('AJAX Error:', error);
+            });
+        }
+
+        searchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new URLSearchParams(new FormData(this));
+            performSearch(this.action + '?' + formData.toString());
+            return false;
+        });
+
+        driverList.addEventListener('click', function (e) {
+            const paginationLink = e.target.closest('.pagination a');
+            if (paginationLink) {
+                e.preventDefault();
+                performSearch(paginationLink.href);
+                return false;
+            }
+        });
+    });
+</script>
 @endsection
