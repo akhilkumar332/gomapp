@@ -1,3 +1,25 @@
+// Configure Axios defaults
+window.axios = axios;
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Add CSRF Token to all requests
+const token = document.head.querySelector('meta[name="csrf-token"]');
+if (token) {
+    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+}
+
+// Global error handler
+window.axios.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response?.status === 419) {
+            // Handle expired CSRF token
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
+
 // Initialize all components that require JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
