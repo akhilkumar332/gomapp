@@ -26,6 +26,7 @@ Route::put('/profile', [ProfileController::class, 'update']);
 
 // Driver Management
 Route::resource('drivers', DriverController::class);
+Route::get('/drivers/{driver}/active-hours', [DriverController::class, 'getActiveHours'])->name('drivers.active-hours');
 Route::post('/drivers/{driver}/activate', [DriverController::class, 'activate'])->name('drivers.activate');
 Route::post('/drivers/{driver}/deactivate', [DriverController::class, 'deactivate'])->name('drivers.deactivate');
 
