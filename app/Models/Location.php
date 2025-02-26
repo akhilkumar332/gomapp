@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Location extends Model
 {
@@ -18,6 +19,7 @@ class Location extends Model
      */
     protected $fillable = [
         'zone_id',
+        'assigned_to',
         'shop_name',
         'address',
         'ghana_post_gps_code',
@@ -58,6 +60,14 @@ class Location extends Model
     }
 
     /**
+     * Get the driver assigned to this location.
+     */
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
      * Get the driver who completed this delivery.
      */
     public function completedBy(): BelongsTo
@@ -68,7 +78,7 @@ class Location extends Model
     /**
      * Get the payments associated with this location.
      */
-    public function payments()
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
@@ -106,5 +116,90 @@ class Location extends Model
             return $this->started_at->diffInMinutes($this->completed_at);
         }
         return null;
+    }
+
+    /**
+     * Check if delivery is on time (within 2 hours)
+     */
+    public function isOnTime(): bool
+    {
+        if (!$this->completed_at) {
+            return false;
+        }
+
+        $start = $this->created_at;
+        $end = $this->completed_at;
+        return $end->diffInMinutes($start) <= 120; // 2 hours threshold
+    }
+
+    /**
+     * Scope a query to only include active locations.
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('completed_at');
+    }
+
+    /**
+     * Scope a query to only include completed locations.
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->whereNotNull('completed_at');
+    }
+
+    /**
+     * Scope a query to only include locations with payment received.
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('payment_received', true);
+    }
+
+    /**
+     * Scope a query to only include locations with pending payment.
+     */
+    public function scopeUnpaid($query)
+    {
+        return $query->where('payment_received', false);
+    }
+
+    /**
+     * Scope a query to only include locations assigned to a specific driver.
+     */
+    public function scopeAssignedTo($query, $driverId)
+    {
+        return $query->where('assigned_to', $driverId);
+    }
+
+    /**
+     * Scope a query to only include locations completed by a specific driver.
+     */
+    public function scopeCompletedBy($query, $driverId)
+    {
+        return $query->where('completed_by', $driverId);
+    }
+
+    /**
+     * Get the formatted payment amount
+     */
+    public function getFormattedPaymentAmountAttribute(): string
+    {
+        return '₵' . number_format($this->payment_amount_received, 2);
+    }
+
+    /**
+     * Get the formatted delivery duration
+     */
+    public function getFormattedDeliveryDurationAttribute(): string
+    {
+        $duration = $this->getDeliveryDuration();
+        if (is_null($duration)) {
+            return '-';
+        }
+
+        $hours = floor($duration / 60);
+        $minutes = $duration % 60;
+        return sprintf('%dh %dm', $hours, $minutes);
     }
 }

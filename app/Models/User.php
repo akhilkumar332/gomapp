@@ -61,7 +61,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the zones assigned to the user.
+     * Get the zones assigned to the driver.
      */
     public function zones(): BelongsToMany
     {
@@ -70,12 +70,63 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the completed locations for the user.
+     * Get all locations assigned to the driver.
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class, 'assigned_to');
+    }
+
+    /**
+     * Get active locations assigned to the driver.
+     */
+    public function activeLocations(): HasMany
+    {
+        return $this->locations()->whereNull('completed_at');
+    }
+
+    /**
+     * Get the completed locations for the driver.
      */
     public function completedLocations(): HasMany
     {
         return $this->hasMany(Location::class, 'completed_by')
             ->whereNotNull('completed_at');
+    }
+
+    /**
+     * Get locations completed today.
+     */
+    public function todayCompletedLocations(): HasMany
+    {
+        return $this->completedLocations()
+            ->whereDate('completed_at', today());
+    }
+
+    /**
+     * Get locations completed this week.
+     */
+    public function weekCompletedLocations(): HasMany
+    {
+        return $this->completedLocations()
+            ->where('completed_at', '>=', now()->startOfWeek());
+    }
+
+    /**
+     * Get locations completed this month.
+     */
+    public function monthCompletedLocations(): HasMany
+    {
+        return $this->completedLocations()
+            ->where('completed_at', '>=', now()->startOfMonth());
+    }
+
+    /**
+     * Get the activity logs for the user.
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
     }
 
     /**
@@ -92,6 +143,22 @@ class User extends Authenticatable
     public function isDriver(): bool
     {
         return $this->role === 'driver';
+    }
+
+    /**
+     * Check if the user is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if the user is suspended.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended';
     }
 
     /**
@@ -114,14 +181,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the activity logs for the user.
-     */
-    public function activities(): HasMany
-    {
-        return $this->hasMany(ActivityLog::class);
-    }
-
-    /**
      * Check if the user is currently online.
      */
     public function isOnline(): bool
@@ -132,5 +191,80 @@ class User extends Authenticatable
 
         // Consider user online if they've been active in the last 5 minutes
         return $this->last_activity->diffInMinutes(now()) < 5;
+    }
+
+    /**
+     * Get the total number of locations assigned to the driver
+     */
+    public function getLocationsCountAttribute(): int
+    {
+        return $this->locations()->count();
+    }
+
+    /**
+     * Get the number of active locations assigned to the driver
+     */
+    public function getActiveLocationsCountAttribute(): int
+    {
+        return $this->activeLocations()->count();
+    }
+
+    /**
+     * Get the number of completed locations for the driver
+     */
+    public function getCompletedLocationsCountAttribute(): int
+    {
+        return $this->completedLocations()->count();
+    }
+
+    /**
+     * Get the completion rate for the driver
+     */
+    public function getCompletionRateAttribute(): float
+    {
+        $total = $this->locations_count;
+        if ($total === 0) {
+            return 0;
+        }
+
+        return ($this->completed_locations_count / $total) * 100;
+    }
+
+    /**
+     * Get the on-time delivery rate for the driver
+     */
+    public function getOnTimeRateAttribute(): float
+    {
+        $completed = $this->completedLocations;
+        if ($completed->isEmpty()) {
+            return 0;
+        }
+
+        $onTime = $completed->filter(function ($location) {
+            return $location->isOnTime();
+        })->count();
+
+        return ($onTime / $completed->count()) * 100;
+    }
+
+    /**
+     * Get the formatted phone number
+     */
+    public function getFormattedPhoneAttribute(): string
+    {
+        if (empty($this->phone_number)) {
+            return '-';
+        }
+
+        // Format: +233 XX XXX XXXX
+        $phone = preg_replace('/[^0-9]/', '', $this->phone_number);
+        if (strlen($phone) === 12) { // Including country code
+            return '+' . substr($phone, 0, 3) . ' ' . 
+                   substr($phone, 3, 2) . ' ' . 
+                   substr($phone, 5, 3) . ' ' . 
+                   substr($phone, 8);
+        }
+
+        return $this->phone_number;
     }
 }
