@@ -29,7 +29,7 @@
                         </tr>
                         <tr>
                             <th>Phone</th>
-                            <td>{{ $driver->phone }}</td>
+                            <td>{{ $driver->phone_number }}</td>
                         </tr>
                         <tr>
                             <th>Status</th>

@@ -55,13 +55,14 @@
                                        class="form-control @error('phone_number') is-invalid @enderror" 
                                        id="phone_number" 
                                        name="phone_number" 
-                                       value="{{ old('phone_number', $driver->phone_number) }}" 
+                                       value="{{ old('phone_number', ltrim(str_replace('+233', '', $driver->phone_number), '0')) }}" 
                                        placeholder="XX XXX XXXX"
                                        required>
                             </div>
                             @error('phone_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="text-muted">Enter number without the country code (e.g., 244123456)</small>
                         </div>
 
                         <div class="mb-3">
@@ -72,6 +73,7 @@
                                     required>
                                 <option value="active" {{ $driver->status === 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ $driver->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="suspended" {{ $driver->status === 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>

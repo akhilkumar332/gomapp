@@ -55,7 +55,7 @@
                             <tr>
                                 <td>{{ $driver->name }}</td>
                                 <td>{{ $driver->email }}</td>
-                                <td>{{ $driver->phone }}</td>
+                                <td>{{ $driver->phone_number }}</td>
                                 <td>
                                     <span class="badge {{ $driver->status === 'active' ? 'bg-success' : 'bg-danger' }}">
                                         {{ ucfirst($driver->status) }}
