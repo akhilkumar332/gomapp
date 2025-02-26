@@ -34,10 +34,24 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Phone</label>
-                            <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                   id="phone" name="phone" value="{{ old('phone') }}" required>
-                            @error('phone')
+                            <label for="phone_number" class="form-label">Phone</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+233</span>
+                                <input type="text" class="form-control @error('phone_number') is-invalid @enderror" 
+                                       id="phone_number" name="phone_number" value="{{ old('phone_number') }}" 
+                                       required placeholder="Enter phone number without country code">
+                                @error('phone_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <small class="text-muted">Enter number without the country code (e.g., 244123456)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                                   id="password" name="password" required>
+                            @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -46,8 +60,9 @@
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select @error('status') is-invalid @enderror" 
                                     id="status" name="status">
-                                <option value="active" {{ old('status') === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="suspended" {{ old('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>

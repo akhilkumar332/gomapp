@@ -10,6 +10,35 @@
             </a>
         </div>
         <div class="card-body">
+            <form action="{{ route('admin.drivers.index') }}" method="GET" class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="name" 
+                               placeholder="Search by name" value="{{ request('name') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" class="form-control" name="email" 
+                               placeholder="Search by email" value="{{ request('email') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" name="phone" 
+                               placeholder="Search by phone" value="{{ request('phone') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="status">
+                            <option value="">All Status</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="mdi mdi-magnify me-1"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>

@@ -8,12 +8,28 @@ use Illuminate\Http\Request;
 
 class DriverController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $drivers = User::where('role', 'driver')
-            ->with(['zones'])
-            ->latest()
-            ->paginate(10);
+        $query = User::where('role', 'driver')->with(['zones']);
+
+        // Apply filters
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('phone')) {
+            $query->where('phone_number', 'like', '%' . $request->phone . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $drivers = $query->latest()->paginate(10)->withQueryString();
 
         return view('admin.drivers.index', compact('drivers'));
     }
@@ -29,17 +45,25 @@ class DriverController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone_number' => 'required|string|max:20|unique:users',
+            'phone_number' => 'required|string|max:20|unique:users,phone_number',
             'password' => 'required|string|min:8',
+            'status' => 'required|in:active,inactive',
             'zones' => 'nullable|array',
             'zones.*' => 'exists:zones,id',
         ]);
 
+        // Format phone number to include Ghana prefix if not present
+        $phone = $validated['phone_number'];
+        if (!str_starts_with($phone, '+233')) {
+            $phone = '+233' . ltrim($phone, '0');
+        }
+
         $driver = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone_number' => $validated['phone_number'],
+            'phone_number' => $phone,
             'password' => bcrypt($validated['password']),
+            'status' => $validated['status'],
             'role' => 'driver',
         ]);
 

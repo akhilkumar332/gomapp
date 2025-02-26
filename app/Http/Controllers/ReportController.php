@@ -41,6 +41,7 @@ class ReportController extends Controller
     public function performance()
     {
         $drivers = User::where('role', 'driver')
+            ->select('users.*')
             ->withCount(['completedLocations' => function ($query) {
                 $query->whereDate('completed_at', '>=', now()->subDays(30));
             }])
@@ -48,10 +49,9 @@ class ReportController extends Controller
                 $query->whereDate('completed_at', '>=', now()->subDays(30))
                     ->where('payment_received', true);
             }], 'payment_amount_received')
-            ->get()
-            ->filter(function ($driver) {
-                return $driver->completed_locations_count > 0;
-            });
+            ->groupBy('users.id')
+            ->having('completed_locations_count', '>', 0)
+            ->get();
 
         $zones = Zone::with(['locations' => function ($query) {
             $query->where('status', 'completed')
@@ -92,6 +92,7 @@ class ReportController extends Controller
 
         // Get driver performance
         $driverPerformance = User::where('role', 'driver')
+            ->select('users.*')
             ->withCount(['completedLocations' => function ($query) use ($now) {
                 $query->whereMonth('completed_at', $now->month);
             }])
@@ -99,10 +100,9 @@ class ReportController extends Controller
                 $query->whereMonth('completed_at', $now->month)
                     ->where('payment_received', true);
             }], 'payment_amount_received')
-            ->get()
-            ->filter(function ($driver) {
-                return $driver->completed_locations_count > 0;
-            });
+            ->groupBy('users.id')
+            ->having('completed_locations_count', '>', 0)
+            ->get();
 
         // Get zone statistics
         $zoneStats = Zone::withCount(['locations' => function ($query) use ($now) {
