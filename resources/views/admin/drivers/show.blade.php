@@ -128,9 +128,12 @@
                                                         </div>
                                                         <div>
                                                             <h6 class="mb-1">{{ $zone->name }}</h6>
-                                                            <small class="text-muted">
-                                                                {{ $zone->locations_count ?? 0 }} locations
-                                                            </small>
+                                                            <div class="small text-muted">
+                                                                {{ $zone->active_locations_count }} active
+                                                                @if($zone->completed_locations_count > 0)
+                                                                    • {{ $zone->completed_locations_count }} completed
+                                                                @endif
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -233,25 +236,25 @@
             <!-- Summary Cards -->
             <div class="row g-4 mb-4">
                 <div class="col-md-3">
-                    <div class="card bg-primary text-white h-100">
+                    <div class="card bg-primary h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="card-title mb-0">Total Deliveries</h6>
+                                    <h6 class="card-title mb-0 text-white">Total Deliveries</h6>
                                 </div>
                                 <div class="avatar-md bg-primary-subtle rounded-circle">
                                     <i class="bx bx-package text-primary display-6"></i>
                                 </div>
                             </div>
-                            <h3 class="mb-2">{{ $stats['total_deliveries'] }}</h3>
-                            <div class="small">
+                            <h3 class="mb-2 text-white">{{ $stats['total_deliveries'] }}</h3>
+                            <div class="small text-white">
                                 @php
                                     $deliveryChange = $stats['deliveries_7d'] - ($stats['deliveries_30d'] / 4);
                                     $deliveryChangePercent = $stats['deliveries_30d'] > 0 
                                         ? ($deliveryChange / ($stats['deliveries_30d'] / 4)) * 100 
                                         : 0;
                                 @endphp
-                                <span class="{{ $deliveryChange >= 0 ? 'text-success' : 'text-danger' }}">
+                                <span class="text-white">
                                     <i class="bx {{ $deliveryChange >= 0 ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt' }}"></i>
                                     {{ abs(number_format($deliveryChangePercent, 1)) }}%
                                 </span>
@@ -261,25 +264,25 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-success text-white h-100">
+                    <div class="card bg-success h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="card-title mb-0">Total Collections</h6>
+                                    <h6 class="card-title mb-0 text-white">Total Collections</h6>
                                 </div>
                                 <div class="avatar-md bg-success-subtle rounded-circle">
                                     <i class="bx bx-money text-success display-6"></i>
                                 </div>
                             </div>
-                            <h3 class="mb-2">₵{{ number_format($stats['total_collections'], 2) }}</h3>
-                            <div class="small">
+                            <h3 class="mb-2 text-white">₵{{ number_format($stats['total_collections'], 2) }}</h3>
+                            <div class="small text-white">
                                 @php
                                     $collectionChange = $stats['collections_7d'] - ($stats['collections_30d'] / 4);
                                     $collectionChangePercent = $stats['collections_30d'] > 0 
                                         ? ($collectionChange / ($stats['collections_30d'] / 4)) * 100 
                                         : 0;
                                 @endphp
-                                <span class="{{ $collectionChange >= 0 ? 'text-success' : 'text-danger' }}">
+                                <span class="text-white">
                                     <i class="bx {{ $collectionChange >= 0 ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt' }}"></i>
                                     {{ abs(number_format($collectionChangePercent, 1)) }}%
                                 </span>
@@ -289,27 +292,27 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-info text-white h-100">
+                    <div class="card bg-info h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="card-title mb-0">Average Per Day</h6>
+                                    <h6 class="card-title mb-0 text-white">Average Per Day</h6>
                                 </div>
                                 <div class="avatar-md bg-info-subtle rounded-circle">
                                     <i class="bx bx-chart text-info display-6"></i>
                                 </div>
                             </div>
-                            <h3 class="mb-2">{{ number_format($stats['avg_deliveries_per_day'], 1) }}</h3>
-                            <div class="small">Deliveries per day this month</div>
+                            <h3 class="mb-2 text-white">{{ number_format($stats['avg_deliveries_per_day'], 1) }}</h3>
+                            <div class="small text-white">Deliveries per day this month</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-warning text-white h-100">
+                    <div class="card bg-warning h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
-                                    <h6 class="card-title mb-0">Active Hours</h6>
+                                    <h6 class="card-title mb-0 text-white">Active Hours</h6>
                                 </div>
                                 <div class="avatar-md bg-warning-subtle rounded-circle">
                                     <i class="bx bx-time text-warning display-6"></i>
@@ -323,7 +326,7 @@
                                     <option value="month" selected>This Month</option>
                                 </select>
                             </div>
-                            <h3 class="mb-0" id="activeHoursValue">{{ $stats['active_hours'] }}</h3>
+                            <h3 class="mb-0 text-white" id="activeHoursValue">{{ $stats['active_hours'] }}</h3>
                         </div>
                     </div>
                 </div>
