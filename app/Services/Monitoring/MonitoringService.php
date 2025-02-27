@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Request;
@@ -57,15 +56,11 @@ class MonitoringService
                 'results' => $this->results
             ];
         } catch (\Exception $e) {
-            Log::error('Error running health checks: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error('Error running health checks: ' . $e->getMessage());
             return [
                 'status' => 'error',
                 'timestamp' => now(),
-                'message' => 'Error running health checks: ' . $e->getMessage(),
+                'message' => 'Error running health checks',
                 'results' => $this->results
             ];
         }
@@ -74,39 +69,25 @@ class MonitoringService
     protected function checkSystem()
     {
         try {
-            $cpuLoad = sys_getloadavg();
-            $totalSpace = disk_total_space('/');
-            $freeSpace = disk_free_space('/');
-            $usedSpace = $totalSpace - $freeSpace;
-            $memoryUsage = $this->getMemoryUsage();
-
-            $this->results['system'] = [
+            // Safe system information gathering for shared hosting
+            $systemInfo = [
                 'status' => 'healthy',
-                'hostname' => gethostname(),
+                'hostname' => gethostname() ?: 'Unknown',
                 'os' => PHP_OS,
                 'php_version' => PHP_VERSION,
                 'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
-                'cpu_usage' => [
-                    '1m' => $cpuLoad[0],
-                    '5m' => $cpuLoad[1],
-                    '15m' => $cpuLoad[2]
-                ],
-                'memory' => $memoryUsage,
-                'disk' => [
-                    'total' => $totalSpace,
-                    'free' => $freeSpace,
-                    'used' => $usedSpace,
-                    'usage_percentage' => round(($usedSpace / $totalSpace) * 100, 2)
-                ],
+                'memory' => $this->getMemoryUsageSafe(),
+                'disk' => $this->getDiskUsageSafe(),
+                'cpu_usage' => $this->getCpuUsageSafe(),
                 'last_checked' => now()
             ];
+
+            $this->results['system'] = $systemInfo;
         } catch (\Exception $e) {
-            Log::error('System check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('System check failed: ' . $e->getMessage());
             $this->results['system'] = [
                 'status' => 'error',
-                'message' => 'Failed to check system status: ' . $e->getMessage(),
+                'message' => 'System information unavailable',
                 'last_checked' => now()
             ];
         }
@@ -151,12 +132,10 @@ class MonitoringService
                 'last_checked' => now()
             ];
         } catch (\Exception $e) {
-            Log::error('API check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('API check failed: ' . $e->getMessage());
             $this->results['api'] = [
                 'status' => 'error',
-                'message' => 'Failed to check API endpoints: ' . $e->getMessage(),
+                'message' => 'API check failed',
                 'last_checked' => now()
             ];
         }
@@ -171,26 +150,35 @@ class MonitoringService
                 try {
                     $startTime = microtime(true);
                     $connection = DB::connection($config['connection']);
-                    $pdo = $connection->getPdo();
+                    
+                    // Simple query to test connection
+                    $connection->getPdo()->query('SELECT 1');
+                    
                     $connectionTime = round((microtime(true) - $startTime) * 1000, 2);
                     
                     $metrics = [
                         'connection_time' => $connectionTime,
-                        'query_time' => $this->getAverageQueryTime($config['connection']),
-                        'active_connections' => $this->getActiveConnections($config['connection'])
+                        'query_time' => 0, // Simplified for shared hosting
+                        'active_connections' => 1 // Simplified for shared hosting
                     ];
 
                     $status = $connectionTime > $this->config['monitors']['database']['thresholds']['connection_time'] 
                         ? 'warning' 
                         : 'healthy';
 
-                    // Get database version based on driver
-                    $version = match ($connection->getDriverName()) {
-                        'sqlite' => $pdo->query('select sqlite_version()')->fetchColumn(),
-                        'mysql' => $pdo->query('select version()')->fetchColumn(),
-                        'pgsql' => $pdo->query('show server_version')->fetchColumn(),
-                        default => 'unknown'
-                    };
+                    // Safe version check
+                    $version = 'Unknown';
+                    try {
+                        $pdo = $connection->getPdo();
+                        $version = match ($connection->getDriverName()) {
+                            'sqlite' => $pdo->query('select sqlite_version()')->fetchColumn(),
+                            'mysql' => $pdo->query('select version()')->fetchColumn(),
+                            'pgsql' => $pdo->query('show server_version')->fetchColumn(),
+                            default => 'Unknown'
+                        };
+                    } catch (\Exception $e) {
+                        // Version check failed, continue with unknown version
+                    }
 
                     $dbStatus[$name] = [
                         'status' => $status,
@@ -202,7 +190,7 @@ class MonitoringService
                 } catch (\Exception $e) {
                     $dbStatus[$name] = [
                         'status' => 'error',
-                        'message' => $e->getMessage()
+                        'message' => 'Connection failed'
                     ];
                 }
             }
@@ -215,12 +203,10 @@ class MonitoringService
                 'last_checked' => now()
             ];
         } catch (\Exception $e) {
-            Log::error('Database check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Database check failed: ' . $e->getMessage());
             $this->results['database'] = [
                 'status' => 'error',
-                'message' => 'Failed to check database status: ' . $e->getMessage(),
+                'message' => 'Database check failed',
                 'last_checked' => now()
             ];
         }
@@ -258,12 +244,10 @@ class MonitoringService
                 'last_checked' => now()
             ];
         } catch (\Exception $e) {
-            Log::error('Cache check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Cache check failed: ' . $e->getMessage());
             $this->results['cache'] = [
                 'status' => 'error',
-                'message' => 'Failed to check cache status: ' . $e->getMessage(),
+                'message' => 'Cache check failed',
                 'last_checked' => now()
             ];
         }
@@ -324,12 +308,10 @@ class MonitoringService
                 'last_checked' => now()
             ];
         } catch (\Exception $e) {
-            Log::error('Storage check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Storage check failed: ' . $e->getMessage());
             $this->results['storage'] = [
                 'status' => 'error',
-                'message' => 'Failed to check storage status: ' . $e->getMessage(),
+                'message' => 'Storage check failed',
                 'last_checked' => now()
             ];
         }
@@ -341,7 +323,7 @@ class MonitoringService
             $metrics = [
                 'failed_jobs' => DB::table('failed_jobs')->count(),
                 'pending_jobs' => Queue::size(),
-                'processed_jobs' => 0 // You might want to track this in your database
+                'processed_jobs' => 0 // Simplified for shared hosting
             ];
 
             $status = 'healthy';
@@ -358,15 +340,115 @@ class MonitoringService
                 'last_checked' => now()
             ];
         } catch (\Exception $e) {
-            Log::error('Queue check failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Queue check failed: ' . $e->getMessage());
             $this->results['queue'] = [
                 'status' => 'error',
-                'message' => 'Failed to check queue status: ' . $e->getMessage(),
+                'message' => 'Queue check failed',
                 'last_checked' => now()
             ];
         }
+    }
+
+    protected function getMemoryUsageSafe()
+    {
+        try {
+            $memoryLimit = $this->getMemoryLimit();
+            $currentUsage = memory_get_usage(true);
+            $peakUsage = memory_get_peak_usage(true);
+            
+            return [
+                'current' => $currentUsage,
+                'peak' => $peakUsage,
+                'limit' => $memoryLimit,
+                'usage_percentage' => $memoryLimit > 0 ? round(($currentUsage / $memoryLimit) * 100, 2) : 0
+            ];
+        } catch (\Exception $e) {
+            return [
+                'current' => 0,
+                'peak' => 0,
+                'limit' => 0,
+                'usage_percentage' => 0
+            ];
+        }
+    }
+
+    protected function getDiskUsageSafe()
+    {
+        try {
+            $path = Storage::disk('local')->path('');
+            if (function_exists('disk_free_space') && function_exists('disk_total_space')) {
+                $total = disk_total_space($path);
+                $free = disk_free_space($path);
+                $used = $total - $free;
+                $usagePercentage = ($used / $total) * 100;
+
+                return [
+                    'total' => $total,
+                    'free' => $free,
+                    'used' => $used,
+                    'usage_percentage' => round($usagePercentage, 2)
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fallback for restricted environments
+        }
+
+        return [
+            'total' => 0,
+            'free' => 0,
+            'used' => 0,
+            'usage_percentage' => 0
+        ];
+    }
+
+    protected function getCpuUsageSafe()
+    {
+        try {
+            if (function_exists('sys_getloadavg')) {
+                $load = sys_getloadavg();
+                return [
+                    '1m' => $load[0],
+                    '5m' => $load[1],
+                    '15m' => $load[2]
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fallback for restricted environments
+        }
+
+        return [
+            '1m' => 0,
+            '5m' => 0,
+            '15m' => 0
+        ];
+    }
+
+    protected function getMemoryLimit()
+    {
+        try {
+            $memoryLimit = ini_get('memory_limit');
+            if ($memoryLimit === '-1') {
+                return PHP_INT_MAX;
+            }
+            return $this->convertToBytes($memoryLimit);
+        } catch (\Exception $e) {
+            return PHP_INT_MAX;
+        }
+    }
+
+    protected function convertToBytes($value)
+    {
+        $value = trim($value);
+        $last = strtolower($value[strlen($value)-1]);
+        $value = (int)$value;
+        
+        switch($last) {
+            case 'g': $value *= 1024;
+            case 'm': $value *= 1024;
+            case 'k': $value *= 1024;
+        }
+        
+        return $value;
     }
 
     protected function getOverallStatus()
@@ -412,72 +494,19 @@ class MonitoringService
 
     protected function getAverageResponseTime()
     {
-        // This would need to be implemented based on your application's logging/monitoring system
+        // Simplified for shared hosting
         return 0;
     }
 
     protected function getErrorRate()
     {
-        // This would need to be implemented based on your application's logging/monitoring system
+        // Simplified for shared hosting
         return 0;
     }
 
     protected function getRequestRate()
     {
-        // This would need to be implemented based on your application's logging/monitoring system
+        // Simplified for shared hosting
         return 0;
-    }
-
-    protected function getUptime()
-    {
-        // This would need to be implemented based on your server's capabilities
-        return 0;
-    }
-
-    protected function getAverageQueryTime($connection)
-    {
-        // This would need to be implemented based on your database monitoring system
-        return 0;
-    }
-
-    protected function getActiveConnections($connection)
-    {
-        // This would need to be implemented based on your database system
-        return 0;
-    }
-
-    protected function getMemoryUsage()
-    {
-        $memory = memory_get_usage(true);
-        return [
-            'current' => $memory,
-            'peak' => memory_get_peak_usage(true),
-            'limit' => $this->getMemoryLimit(),
-            'usage_percentage' => round(($memory / $this->getMemoryLimit()) * 100, 2)
-        ];
-    }
-
-    protected function getMemoryLimit()
-    {
-        $memoryLimit = ini_get('memory_limit');
-        if ($memoryLimit === '-1') {
-            return PHP_INT_MAX;
-        }
-        return $this->convertToBytes($memoryLimit);
-    }
-
-    protected function convertToBytes($value)
-    {
-        $value = trim($value);
-        $last = strtolower($value[strlen($value)-1]);
-        $value = (int)$value;
-        
-        switch($last) {
-            case 'g': $value *= 1024;
-            case 'm': $value *= 1024;
-            case 'k': $value *= 1024;
-        }
-        
-        return $value;
     }
 }

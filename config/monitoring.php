@@ -56,26 +56,12 @@ return [
             ]
         ],
 
-        'web' => [
-            'enabled' => true,
-            'urls' => [
-                'main' => env('APP_URL'),
-                'admin' => env('APP_URL') . '/admin',
-                'driver' => env('APP_URL') . '/driver'
-            ],
-            'metrics' => [
-                'response_time',
-                'error_rate',
-                'uptime'
-            ]
-        ],
-
         'database' => [
             'enabled' => true,
             'connections' => [
-                'sqlite' => [
-                    'name' => 'SQLite',
-                    'connection' => 'sqlite'
+                'main' => [
+                    'name' => 'Main Database',
+                    'connection' => env('DB_CONNECTION', 'mysql')
                 ]
             ],
             'metrics' => [
@@ -224,6 +210,7 @@ return [
         'refresh_interval' => 30, // seconds
         'date_format' => 'Y-m-d H:i:s',
         'theme' => 'light', // light, dark, or auto
-        'show_details' => true
+        'show_details' => true,
+        'timezone' => env('APP_TIMEZONE', 'UTC')
     ]
 ];
