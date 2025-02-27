@@ -31,7 +31,7 @@ Route::get('/dashboard/activities', [DashboardController::class, 'getActivities'
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
 Route::put('/profile', [ProfileController::class, 'update']);
 
-// Status Dashboard (New)
+// Status Dashboard
 Route::prefix('status')->name('status.')->group(function () {
     Route::get('/', [StatusController::class, 'index'])->name('index');
     Route::post('/refresh', [StatusController::class, 'refresh'])->name('refresh');

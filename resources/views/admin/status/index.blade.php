@@ -6,7 +6,10 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-1">System Status</h4>
-            <div class="text-muted">Last updated: {{ $timestamp->diffForHumans() }}</div>
+            <div class="text-muted">
+                Last updated: {{ $timestamp->setTimezone('UTC')->format('Y-m-d H:i:s') }} UTC
+                ({{ $timestamp->diffForHumans() }})
+            </div>
         </div>
         <div class="d-flex gap-2">
             <div class="dropdown">
@@ -317,21 +320,34 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Get current URL protocol and host
+    const protocol = window.location.protocol;
+    const host = window.location.host;
+    const baseUrl = `${protocol}//${host}`;
+    
     // Refresh button handler
     const refreshBtn = document.querySelector('.refresh-status');
     refreshBtn.addEventListener('click', function() {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i>Refreshing...';
 
-        fetch('{{ route("admin.status.refresh") }}', {
+        // Use absolute URL with current protocol
+        fetch(`${baseUrl}/admin/status/refresh`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
+            },
+            credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             window.location.reload();
         })
@@ -339,65 +355,99 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             refreshBtn.disabled = false;
             refreshBtn.innerHTML = '<i class="bx bx-refresh me-1"></i>Refresh';
+            alert('Error refreshing status. Please try again.');
         });
     });
 
-    // View details handlers
+    // View details handlers with absolute URLs
     document.querySelector('.view-api-details')?.addEventListener('click', function() {
         const modal = new bootstrap.Modal(document.getElementById('apiDetailsModal'));
         modal.show();
         
-        fetch('{{ route("admin.status.api-details") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('apiDetailsContent').innerHTML = formatApiDetails(data.data);
-                } else {
-                    throw new Error(data.message || 'Failed to load API details');
-                }
-            })
-            .catch(error => {
-                document.getElementById('apiDetailsContent').innerHTML = 
-                    `<div class="alert alert-danger">${error.message || 'Error loading API details'}</div>`;
-            });
+        fetch(`${baseUrl}/admin/status/api-details`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('apiDetailsContent').innerHTML = formatApiDetails(data.data);
+            } else {
+                throw new Error(data.message || 'Failed to load API details');
+            }
+        })
+        .catch(error => {
+            document.getElementById('apiDetailsContent').innerHTML = 
+                `<div class="alert alert-danger">${error.message || 'Error loading API details'}</div>`;
+        });
     });
 
     document.querySelector('.view-db-details')?.addEventListener('click', function() {
         const modal = new bootstrap.Modal(document.getElementById('dbDetailsModal'));
         modal.show();
         
-        fetch('{{ route("admin.status.db-details") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('dbDetailsContent').innerHTML = formatDbDetails(data.data);
-                } else {
-                    throw new Error(data.message || 'Failed to load database details');
-                }
-            })
-            .catch(error => {
-                document.getElementById('dbDetailsContent').innerHTML = 
-                    `<div class="alert alert-danger">${error.message || 'Error loading database details'}</div>`;
-            });
+        fetch(`${baseUrl}/admin/status/db-details`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('dbDetailsContent').innerHTML = formatDbDetails(data.data);
+            } else {
+                throw new Error(data.message || 'Failed to load database details');
+            }
+        })
+        .catch(error => {
+            document.getElementById('dbDetailsContent').innerHTML = 
+                `<div class="alert alert-danger">${error.message || 'Error loading database details'}</div>`;
+        });
     });
 
     document.querySelector('.view-system-details')?.addEventListener('click', function() {
         const modal = new bootstrap.Modal(document.getElementById('systemDetailsModal'));
         modal.show();
         
-        fetch('{{ route("admin.status.system-details") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('systemDetailsContent').innerHTML = formatSystemDetails(data.data);
-                } else {
-                    throw new Error(data.message || 'Failed to load system details');
-                }
-            })
-            .catch(error => {
-                document.getElementById('systemDetailsContent').innerHTML = 
-                    `<div class="alert alert-danger">${error.message || 'Error loading system details'}</div>`;
-            });
+        fetch(`${baseUrl}/admin/status/system-details`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('systemDetailsContent').innerHTML = formatSystemDetails(data.data);
+            } else {
+                throw new Error(data.message || 'Failed to load system details');
+            }
+        })
+        .catch(error => {
+            document.getElementById('systemDetailsContent').innerHTML = 
+                `<div class="alert alert-danger">${error.message || 'Error loading system details'}</div>`;
+        });
     });
 
     // Show all endpoints toggle
@@ -439,7 +489,19 @@ function formatApiDetails(data) {
                     </tr>
                     <tr>
                         <th>Last Checked</th>
-                        <td>${new Date(data.last_checked).toLocaleString()}</td>
+                        <td>${data.last_checked}</td>
+                    </tr>
+                    <tr>
+                        <th>Response Time</th>
+                        <td>${data.metrics?.response_time || 0}ms</td>
+                    </tr>
+                    <tr>
+                        <th>Error Rate</th>
+                        <td>${data.metrics?.error_rate || 0}%</td>
+                    </tr>
+                    <tr>
+                        <th>Request Rate</th>
+                        <td>${data.metrics?.request_rate || 0} req/s</td>
                     </tr>
                 </tbody>
             </table>
@@ -453,13 +515,35 @@ function formatDbDetails(data) {
     for (const [connection, details] of Object.entries(data.connections)) {
         html += `
             <tr>
-                <th>${connection.toUpperCase()}</th>
+                <th colspan="2" class="table-light">${connection.toUpperCase()}</th>
+            </tr>
+            <tr>
+                <th>Status</th>
                 <td>
                     <span class="badge bg-${details.status === 'healthy' ? 'success' : 'danger'}">
                         ${details.status}
                     </span>
                 </td>
+            </tr>
+            <tr>
+                <th>Connection Time</th>
                 <td>${details.connection_time}ms</td>
+            </tr>
+            <tr>
+                <th>Driver</th>
+                <td>${details.driver || 'N/A'}</td>
+            </tr>
+            <tr>
+                <th>Version</th>
+                <td>${details.version || 'N/A'}</td>
+            </tr>
+            <tr>
+                <th>Active Connections</th>
+                <td>${details.metrics?.active_connections || 0}</td>
+            </tr>
+            <tr>
+                <th>Average Query Time</th>
+                <td>${details.metrics?.query_time || 0}ms</td>
             </tr>
         `;
     }
@@ -526,6 +610,10 @@ function formatSystemDetails(data) {
                             <div>Used: ${formatBytes(data.disk.used)}</div>
                             <div>Free: ${formatBytes(data.disk.free)}</div>
                         </td>
+                    </tr>
+                    <tr>
+                        <th>Last Checked</th>
+                        <td>${data.last_checked}</td>
                     </tr>
                 </tbody>
             </table>

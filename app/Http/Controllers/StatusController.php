@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class StatusController extends Controller
 {
@@ -26,9 +26,14 @@ class StatusController extends Controller
             
             $status = $this->monitoringService->check();
 
+            // Convert timestamp to Carbon instance if it's not already
+            $timestamp = $status['timestamp'] instanceof Carbon 
+                ? $status['timestamp'] 
+                : Carbon::parse($status['timestamp']);
+
             return view('admin.status.index', [
                 'status' => $status['results'],
-                'timestamp' => $status['timestamp'],
+                'timestamp' => $timestamp,
                 'overall_status' => $this->getOverallStatus($status['results'])
             ]);
         } catch (\Exception $e) {
@@ -54,10 +59,16 @@ class StatusController extends Controller
             
             $status = $this->monitoringService->check();
 
+            // Convert timestamp to Carbon instance if it's not already
+            $timestamp = $status['timestamp'] instanceof Carbon 
+                ? $status['timestamp'] 
+                : Carbon::parse($status['timestamp']);
+
             if ($request->ajax()) {
                 return response()->json([
                     'status' => $status['results'],
-                    'timestamp' => $status['timestamp'],
+                    'timestamp' => $timestamp->setTimezone('UTC')->format('Y-m-d H:i:s'),
+                    'timestamp_diff' => $timestamp->diffForHumans(),
                     'overall_status' => $this->getOverallStatus($status['results'])
                 ]);
             }
@@ -103,7 +114,7 @@ class StatusController extends Controller
                     'status' => $apiStatus['status'],
                     'groups' => $apiStatus['groups'],
                     'metrics' => $apiStatus['metrics'],
-                    'last_checked' => $apiStatus['last_checked']
+                    'last_checked' => Carbon::parse($apiStatus['last_checked'])->setTimezone('UTC')->format('Y-m-d H:i:s')
                 ]
             ]);
         } catch (\Exception $e) {
@@ -135,7 +146,7 @@ class StatusController extends Controller
                 'data' => [
                     'status' => $dbStatus['status'],
                     'connections' => $dbStatus['connections'],
-                    'last_checked' => $dbStatus['last_checked']
+                    'last_checked' => Carbon::parse($dbStatus['last_checked'])->setTimezone('UTC')->format('Y-m-d H:i:s')
                 ]
             ]);
         } catch (\Exception $e) {
@@ -173,7 +184,7 @@ class StatusController extends Controller
                     'cpu_usage' => $systemStatus['cpu_usage'],
                     'memory' => $systemStatus['memory'],
                     'disk' => $systemStatus['disk'],
-                    'last_checked' => $systemStatus['last_checked']
+                    'last_checked' => Carbon::parse($systemStatus['last_checked'])->setTimezone('UTC')->format('Y-m-d H:i:s')
                 ]
             ]);
         } catch (\Exception $e) {
@@ -246,10 +257,14 @@ class StatusController extends Controller
             
             // Data
             foreach ($status['results'] as $component => $details) {
+                $lastChecked = $details['last_checked'] instanceof Carbon 
+                    ? $details['last_checked'] 
+                    : Carbon::parse($details['last_checked']);
+
                 fputcsv($file, [
                     $component,
                     $details['status'] ?? 'unknown',
-                    ($details['last_checked'] ?? now())->format('Y-m-d H:i:s'),
+                    $lastChecked->setTimezone('UTC')->format('Y-m-d H:i:s'),
                     json_encode($details)
                 ]);
             }
