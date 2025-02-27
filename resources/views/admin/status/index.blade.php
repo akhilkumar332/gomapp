@@ -7,8 +7,8 @@
         <div>
             <h4 class="mb-1">System Status</h4>
             <div class="text-muted">
-                Last updated: {{ $timestamp->setTimezone('UTC')->format('Y-m-d H:i:s') }} UTC
-                ({{ $timestamp->diffForHumans() }})
+                Last updated: <span id="lastUpdatedTime" data-timestamp="{{ $timestamp }}">{{ $timestamp->setTimezone('UTC')->format('Y-m-d H:i:s') }} UTC</span>
+                (<span id="lastUpdatedDiff"></span>)
             </div>
         </div>
         <div class="d-flex gap-2">
@@ -318,8 +318,45 @@
 </div>
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Update timestamp every second
+    const lastUpdatedTime = document.getElementById('lastUpdatedTime');
+    const lastUpdatedDiff = document.getElementById('lastUpdatedDiff');
+    const timestamp = moment.utc(lastUpdatedTime.dataset.timestamp);
+
+    function updateTimestamp() {
+        const now = moment.utc();
+        const diff = moment.duration(now.diff(timestamp));
+        
+        let timeText = '';
+        if (diff.asDays() >= 1) {
+            timeText = Math.floor(diff.asDays()) + ' days';
+            if (diff.hours() > 0) {
+                timeText += ' ' + diff.hours() + ' hours';
+            }
+        } else if (diff.asHours() >= 1) {
+            timeText = Math.floor(diff.asHours()) + ' hours';
+            if (diff.minutes() > 0) {
+                timeText += ' ' + diff.minutes() + ' minutes';
+            }
+        } else if (diff.asMinutes() >= 1) {
+            timeText = Math.floor(diff.asMinutes()) + ' minutes';
+            if (diff.seconds() > 0) {
+                timeText += ' ' + diff.seconds() + ' seconds';
+            }
+        } else {
+            timeText = Math.floor(diff.asSeconds()) + ' seconds';
+        }
+        
+        lastUpdatedDiff.textContent = timeText + ' ago';
+    }
+
+    // Update immediately and then every second
+    updateTimestamp();
+    setInterval(updateTimestamp, 1000);
+
     // Get current URL protocol and host
     const protocol = window.location.protocol;
     const host = window.location.host;
@@ -331,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i>Refreshing...';
 
-        // Use absolute URL with current protocol
         fetch(`${baseUrl}/admin/status/refresh`, {
             method: 'POST',
             headers: {
@@ -359,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // View details handlers with absolute URLs
+    // View details handlers
     document.querySelector('.view-api-details')?.addEventListener('click', function() {
         const modal = new bootstrap.Modal(document.getElementById('apiDetailsModal'));
         modal.show();
