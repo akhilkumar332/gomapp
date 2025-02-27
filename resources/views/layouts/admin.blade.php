@@ -12,6 +12,7 @@
     
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
     <!-- Styles -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -153,6 +154,40 @@
             position: relative;
             height: 300px;
         }
+
+        /* Status Dashboard Styles */
+        .avatar-md {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1); }
+        .bg-success-subtle { background-color: rgba(25, 135, 84, 0.1); }
+        .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1); }
+        .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1); }
+        .bg-info-subtle { background-color: rgba(13, 202, 240, 0.1); }
+
+        .text-primary { color: #0d6efd !important; }
+        .text-success { color: #198754 !important; }
+        .text-warning { color: #ffc107 !important; }
+        .text-danger { color: #dc3545 !important; }
+        .text-info { color: #0dcaf0 !important; }
+
+        .display-6 {
+            font-size: 2rem;
+            line-height: 1;
+        }
     </style>
 
     @stack('styles')
@@ -198,6 +233,13 @@
                 <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                     <i class="mdi mdi-chart-bar"></i>
                     <span>Reports</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ route('admin.status.index') }}" class="nav-link {{ request()->routeIs('admin.status.*') ? 'active' : '' }}">
+                    <i class="mdi mdi-server"></i>
+                    <span>Status</span>
                 </a>
             </div>
 
