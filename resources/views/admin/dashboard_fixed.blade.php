@@ -697,10 +697,6 @@ function updateMetricValue(metric, value, suffix = '', prefix = '') {
             
             // Update chart data
             updateChartData(data);
-            
-            // Update activities table
-            updateActivitiesTable(data.recentActivities);
-            
         } catch (error) {
             console.error('Error updating metrics:', error);
         }

@@ -790,15 +790,77 @@
 @endsection
 
 @push('scripts')
+<!-- Load Chart.js first -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Dashboard initialization -->
 <script>
+// Ensure Chart.js is loaded
+if (typeof Chart === 'undefined') {
+    console.error('Chart.js not loaded');
+    throw new Error('Chart.js must be loaded before dashboard initialization');
+}
+
+
+// Dashboard state and elements
+let currentView = 'deliveries';
+let isInitializing = false;
+let activityRefreshInterval = null;
+
+const loadingOverlay = document.getElementById('loading-overlay');
+const dashboardContent = document.getElementById('dashboard-content');
+
+// Function to initialize dashboard
+const initializeDashboard = async () => {
+    if (isInitializing) return;
+    isInitializing = true;
+
+    try {
+        // Show loading overlay
+        loadingOverlay.style.opacity = '1';
+        loadingOverlay.style.display = 'flex';
+
+        // Initialize chart first
+        await initializeChart('deliveries')
+            .catch(error => {
+                console.error('Chart initialization error:', error);
+                showChartError('Failed to initialize chart. Please try refreshing the page.');
+            });
+
+        // Then initialize activities
+        await refreshActivities()
+            .catch(error => {
+                console.error('Activities initialization error:', error);
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-danger alert-dismissible fade show mb-4';
+                errorAlert.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="mdi mdi-alert me-2"></i>
+                        <div>
+                            <strong>Activities Error:</strong> Failed to load recent activities. Please try refreshing the page.
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                dashboardContent.insertBefore(errorAlert, dashboardContent.firstChild);
+            });
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+    } finally {
+        // Hide loading overlay
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+        }, 300);
+        isInitializing = false;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const dashboardContent = document.getElementById('dashboard-content');
-    
     // Initialize click handlers
     const viewButtons = document.querySelectorAll('.btn-group .btn');
     viewButtons.forEach(button => {
         button.addEventListener('click', () => {
+            if (isInitializing) return; // Prevent clicks during initialization
             viewButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const view = button.textContent.toLowerCase().includes('deliveries') ? 'deliveries' : 'collections';
@@ -808,55 +870,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const refreshButton = document.querySelector('.btn-icon');
     if (refreshButton) {
-        refreshButton.addEventListener('click', refreshChart);
+        refreshButton.addEventListener('click', () => {
+            if (isInitializing) return; // Prevent refresh during initialization
+            refreshChart();
+        });
     }
 
     const activitiesRefreshButton = document.querySelector('.btn-outline-primary');
     if (activitiesRefreshButton) {
-        activitiesRefreshButton.addEventListener('click', refreshActivities);
+        activitiesRefreshButton.addEventListener('click', () => {
+            if (isInitializing) return; // Prevent refresh during initialization
+            refreshActivities();
+        });
     }
 
-    // Initialize dashboard
-    Promise.all([
-        initializeChart('deliveries'),
-        refreshActivities()
-    ])
-    .catch(error => {
-        console.error('Dashboard initialization error:', error);
-        // Show error message at the top of the dashboard
-        const errorAlert = document.createElement('div');
-        errorAlert.className = 'alert alert-danger alert-dismissible fade show mb-4';
-        errorAlert.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="mdi mdi-alert me-2"></i>
-                <div>
-                    <strong>Dashboard Error:</strong> Some components failed to load. Please try refreshing the page.
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        dashboardContent.insertBefore(errorAlert, dashboardContent.firstChild);
-    })
-    .finally(() => {
-        // Hide loading overlay with fade effect
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-        }, 300); // Match this with CSS transition duration
-    });
+    // Start initialization
+    initializeDashboard();
 
     // Set up auto-refresh for activities
-    let activityRefreshInterval = setInterval(refreshActivities, 60000); // Refresh every minute
+    const startActivityRefresh = () => {
+        if (activityRefreshInterval) {
+            clearInterval(activityRefreshInterval);
+            activityRefreshInterval = null;
+        }
+        
+        // Initial refresh
+        if (!isInitializing) {
+            refreshActivities().catch(console.error);
+        }
+        
+        // Set up interval for future refreshes
+        activityRefreshInterval = setInterval(() => {
+            if (!isInitializing) {
+                refreshActivities().catch(console.error);
+            }
+        }, 60000); // Refresh every minute
+    };
 
-    // Clear interval when page is hidden
+    // Handle page visibility changes
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            clearInterval(activityRefreshInterval);
+            if (activityRefreshInterval) {
+                clearInterval(activityRefreshInterval);
+                activityRefreshInterval = null;
+            }
         } else {
-            refreshActivities(); // Refresh immediately when page becomes visible
-            activityRefreshInterval = setInterval(refreshActivities, 60000);
+            startActivityRefresh();
         }
     });
+
+    // Start auto-refresh after initialization
+    startActivityRefresh();
 });
 
 // Update initializeChart to return a promise
@@ -939,9 +1003,10 @@ function initializeChart(view) {
                 : 'Line chart showing collection amounts over the past week';
             chartDescription.textContent = description;
 
+            // Create new chart instance
             currentChart = new Chart(ctx, {
                 type: 'line',
-                data: chartConfig[view],
+                data: JSON.parse(JSON.stringify(chartConfig[view])), // Deep clone to avoid reference issues
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1043,27 +1108,49 @@ function initializeChart(view) {
                             }
                         }
                     },
-                    animation: {
-                        duration: 750,
-                        easing: 'easeInOutQuart',
-                        onProgress: (animation) => {
-                            // Update loading status for screen readers
-                            if (animation.currentStep < animation.numSteps) {
-                                announceToScreenReader('Chart is updating...');
+                    animation: false, // Disable animations completely
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12
+                                },
+                                generateLabels: function(chart) {
+                                    const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                    labels.forEach(label => {
+                                        label.text = `${label.text} - Click to ${label.hidden ? 'show' : 'hide'} data`;
+                                    });
+                                    return labels;
+                                }
                             }
-                        },
-                        onComplete: () => {
-                            chartLoader.classList.add('d-none');
-                            // Announce completion to screen readers
+                        }
+                    },
+                    onComplete: (chart) => {
+                        // Hide loader
+                        chartLoader.classList.add('d-none');
+                        
+                        try {
+                            // Calculate and announce totals
+                            const data = chart.config.data;
                             const total = view === 'deliveries' 
-                                ? chartConfig[view].datasets[0].data.reduce((a, b) => a + b, 0)
-                                : chartConfig[view].datasets[0].data.reduce((a, b) => a + b, 0).toFixed(2);
+                                ? data.datasets[0].data.reduce((a, b) => a + b, 0)
+                                : data.datasets[0].data.reduce((a, b) => a + b, 0).toFixed(2);
+                            
                             const message = view === 'deliveries'
                                 ? `Chart updated. Showing ${total} total deliveries over the past week.`
                                 : `Chart updated. Showing ₵${total} total collections over the past week.`;
+                            
                             announceToScreenReader(message);
                             resolve();
+                        } catch (error) {
+                            console.error('Error in chart completion:', error);
+                            reject(error);
                         }
+                    }
                     },
                     interaction: {
                         intersect: false,
@@ -1103,44 +1190,197 @@ function initializeChart(view) {
 
 let currentView = 'deliveries';
 
-function updateChartView(view) {
-    const buttons = document.querySelectorAll('.btn-group .btn');
-    const refreshBtn = document.querySelector('.btn-icon');
-    
+async function updateChartView(view) {
+    if (isInitializing) {
+        console.warn('Chart update prevented during initialization');
+        return;
+    }
+
     if (!['deliveries', 'collections'].includes(view)) {
         console.error('Invalid view type:', view);
         return;
     }
 
-    // Disable buttons during update
-    buttons.forEach(btn => btn.disabled = true);
-    refreshBtn.disabled = true;
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    const refreshBtn = document.querySelector('.btn-icon');
+    const chartLoader = document.querySelector('.chart-loader');
+    
+    if (!buttons.length || !refreshBtn || !chartLoader) {
+        console.error('Required elements not found');
+        return;
+    }
 
-    // Update chart
-    initializeChart(view)
-        .then(() => {
-            // Update button states
-            buttons.forEach(btn => {
-                const isActive = btn.textContent.toLowerCase().includes(view);
-                btn.classList.toggle('active', isActive);
-                btn.setAttribute('aria-pressed', isActive.toString());
-            });
-            
-            // Store current view
-            currentView = view;
-            
-            // Announce to screen readers
-            announceToScreenReader(`Chart updated to show ${view}`);
+    try {
+        // Show loader and disable buttons
+        chartLoader.classList.remove('d-none');
+        buttons.forEach(btn => btn.disabled = true);
+        refreshBtn.disabled = true;
+
+        // Update chart with new view
+        await initializeChart(view);
+        
+        // Update button states
+        buttons.forEach(btn => {
+            const isActive = btn.textContent.toLowerCase().includes(view);
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive.toString());
+        });
+        
+        // Store current view and announce update
+        currentView = view;
+        announceToScreenReader(`Chart updated to show ${view}`);
+    } catch (error) {
+        console.error('Chart update failed:', error);
+        showChartError('Failed to update chart. Please try again.');
+        announceToScreenReader('Chart update failed');
+    } finally {
+        // Reset UI state
+        chartLoader.classList.add('d-none');
+        buttons.forEach(btn => btn.disabled = false);
+        refreshBtn.disabled = false;
+    }
+}
+
+
+function updateBasicMetrics(basicMetrics) {
+    document.querySelector('.total-zones h3').textContent = basicMetrics.totalZones;
+    document.querySelector('.active-drivers h3').textContent = basicMetrics.activeDrivers;
+    document.querySelector('.total-locations h3').textContent = basicMetrics.totalLocations;
+    document.querySelector('.today-collections h3').textContent = `₵${Number(basicMetrics.todayCollections).toFixed(2)}`;
+}
+
+function updatePerformanceMetrics(performanceMetrics) {
+    const successRate = document.querySelector('.delivery-success-rate .progress-bar');
+    if (successRate) {
+        successRate.style.width = `${performanceMetrics.delivery_success_rate}%`;
+        successRate.nextElementSibling.textContent = `${performanceMetrics.delivery_success_rate}% Success Rate`;
+    }
+
+    const avgDeliveryTime = document.querySelector('.average-delivery-time .display-6');
+    if (avgDeliveryTime) {
+        avgDeliveryTime.textContent = Math.round(performanceMetrics.average_delivery_time);
+    }
+}
+
+function updateChartData(data) {
+    if (currentChart && data.chartData) {
+        // Update chart datasets
+        currentChart.data.datasets.forEach((dataset, index) => {
+            if (data.chartData[index]) {
+                dataset.data = data.chartData[index];
+            }
+        });
+        currentChart.update('none');
+    }
+}
+
+// Update metrics and data
+function updateMetrics(data) {
+    try {
+        // Update statistics cards from basicMetrics
+        const basicMetrics = data.basicMetrics;
+        document.querySelector('.total-zones h3').textContent = basicMetrics.totalZones;
+        document.querySelector('.active-drivers h3').textContent = basicMetrics.activeDrivers;
+        document.querySelector('.total-locations h3').textContent = basicMetrics.totalLocations;
+        document.querySelector('.today-collections h3').textContent = `₵${Number(basicMetrics.todayCollections).toFixed(2)}`;
+
+        // Update performance metrics
+        const performanceMetrics = data.performanceMetrics;
+        const successRate = document.querySelector('.delivery-success-rate .progress-bar');
+        if (successRate) {
+            successRate.style.width = `${performanceMetrics.delivery_success_rate}%`;
+            successRate.nextElementSibling.textContent = `${performanceMetrics.delivery_success_rate}% Success Rate`;
+        }
+
+        const avgDeliveryTime = document.querySelector('.average-delivery-time .display-6');
+        if (avgDeliveryTime) {
+            avgDeliveryTime.textContent = Math.round(performanceMetrics.average_delivery_time);
+        }
+
+        // Update chart data if available
+        const chartData = data.deliveryChart;
+        if (currentChart && chartData) {
+            currentChart.data.labels = chartData.labels;
+            currentChart.data.datasets[0].data = chartData.completed;
+            currentChart.data.datasets[1].data = chartData.total;
+            if (currentView === 'collections' && chartData.collections) {
+                currentChart.data.datasets[0].data = chartData.collections;
+            }
+            currentChart.update('none');
+        }
+    } catch (error) {
+        console.error('Error updating metrics:', error);
+        showError(true);
+    }
+}
+
+
+// Helper functions for dashboard refresh
+function showLoading(show) {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.opacity = show ? '1' : '0';
+        if (show) {
+            loadingOverlay.style.display = 'flex';
+        } else {
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 300);
+        }
+    }
+}
+
+function showError(show) {
+    const errorContainer = document.getElementById('error-container');
+    if (errorContainer && show) {
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mb-4';
+        errorAlert.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="mdi mdi-alert me-2"></i>
+                <div>
+                    <strong>Error:</strong> Failed to update dashboard metrics. Please try refreshing the page.
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        errorContainer.appendChild(errorAlert);
+    }
+}
+
+function updateLastUpdated(timestamp) {
+    const lastUpdated = document.querySelector('.last-updated');
+    if (lastUpdated) {
+        lastUpdated.textContent = `Last updated: ${timestamp}`;
+    }
+}
+
+// Dashboard refresh function
+function refreshDashboard() {
+    if (isInitializing) {
+        console.warn('Dashboard refresh prevented during initialization');
+        return;
+    }
+
+    showLoading(true);
+    
+    fetch('/admin/dashboard/metrics')
+        .then(response => response.json())
+        .then(response => {
+            if (response.success) {
+                updateMetrics(response.data);
+                updateLastUpdated(response.data.last_updated);
+            } else {
+                console.error('Failed to fetch metrics:', response.message);
+                showError(true);
+            }
         })
         .catch(error => {
-            console.error('Chart update failed:', error);
-            showChartError('Failed to update chart. Please try again.');
-            announceToScreenReader('Chart update failed');
+            console.error('Error refreshing dashboard:', error);
+            showError(true);
         })
         .finally(() => {
-            // Re-enable buttons
-            buttons.forEach(btn => btn.disabled = false);
-            refreshBtn.disabled = false;
+            showLoading(false);
         });
 }
 
@@ -1308,43 +1548,52 @@ function announceToScreenReader(message) {
     }, 3000);
 }
 
-function refreshChart() {
+async function refreshChart() {
+    if (isInitializing) {
+        console.warn('Chart refresh prevented during initialization');
+        return;
+    }
+
     const refreshBtn = document.querySelector('.btn-icon');
-    const refreshIcon = refreshBtn.querySelector('.mdi-refresh');
+    const refreshIcon = refreshBtn?.querySelector('.mdi-refresh');
     const buttons = document.querySelectorAll('.btn-group .btn');
+    const chartLoader = document.querySelector('.chart-loader');
     
-    // Disable all buttons during refresh
-    refreshBtn.disabled = true;
-    buttons.forEach(btn => btn.disabled = true);
-    
-    // Add spinning animation
-    refreshIcon.classList.add('mdi-spin');
+    if (!refreshBtn || !refreshIcon || !chartLoader) {
+        console.error('Required elements not found');
+        return;
+    }
 
     // Get current view from active button
-    const currentView = Array.from(buttons).find(btn => btn.classList.contains('active'))
-        ?.textContent.toLowerCase().includes('deliveries') ? 'deliveries' : 'collections';
+    const activeButton = Array.from(buttons).find(btn => btn.classList.contains('active'));
+    const view = activeButton?.textContent.toLowerCase().includes('deliveries') ? 'deliveries' : 'collections';
 
-    if (!currentView) {
+    if (!view) {
         console.error('No active view found');
         return;
     }
 
-    // Refresh chart
-    initializeChart(currentView)
-        .then(() => {
-            announceToScreenReader(`Chart refreshed showing ${currentView}`);
-        })
-        .catch(error => {
-            console.error('Chart refresh failed:', error);
-            showChartError('Failed to refresh chart. Please try again.');
-            announceToScreenReader('Chart refresh failed');
-        })
-        .finally(() => {
-            // Re-enable buttons and remove spinner
-            refreshBtn.disabled = false;
-            buttons.forEach(btn => btn.disabled = false);
-            refreshIcon.classList.remove('mdi-spin');
-        });
+    try {
+        // Show loader and disable buttons
+        chartLoader.classList.remove('d-none');
+        refreshBtn.disabled = true;
+        buttons.forEach(btn => btn.disabled = true);
+        refreshIcon.classList.add('mdi-spin');
+
+        // Refresh chart with current view
+        await initializeChart(view);
+        announceToScreenReader(`Chart refreshed showing ${view}`);
+    } catch (error) {
+        console.error('Chart refresh failed:', error);
+        showChartError('Failed to refresh chart. Please try again.');
+        announceToScreenReader('Chart refresh failed');
+    } finally {
+        // Reset UI state
+        chartLoader.classList.add('d-none');
+        refreshBtn.disabled = false;
+        buttons.forEach(btn => btn.disabled = false);
+        refreshIcon.classList.remove('mdi-spin');
+    }
 }
 
 function showChartError(message) {
@@ -1399,16 +1648,6 @@ function refreshActivities() {
         // Clear previous errors
         errorContainer.innerHTML = '';
 
-        // Helper function to handle API errors
-        const handleApiError = (error) => {
-            if (error.status === 401) {
-                // Redirect to login if unauthenticated
-                window.location.href = '/login';
-                return;
-            }
-            throw error;
-        };
-
         // Fetch activities from API
         fetch('/admin/dashboard/activities', {
             method: 'GET',
@@ -1419,12 +1658,9 @@ function refreshActivities() {
             },
             credentials: 'same-origin'
         })
-        .then(async response => {
+        .then(response => {
             if (!response.ok) {
-                const error = new Error();
-                error.status = response.status;
-                error.text = await response.text();
-                return handleApiError(error);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
@@ -1433,12 +1669,12 @@ function refreshActivities() {
                 throw new Error('Invalid response format');
             }
 
-            // Update table content
+            // Update table content directly
             tbody.innerHTML = data.activities.length 
                 ? data.activities.map(activity => `
                     <tr>
                         <td>${activity.time}</td>
-                        <td>${activity.user}</td>
+                        <td>${activity.user || 'System'}</td>
                         <td>${activity.description}</td>
                         <td>
                             <span class="badge bg-${activity.status_color}">${activity.status}</span>
@@ -1456,54 +1692,32 @@ function refreshActivities() {
             resolve(data.activities);
         })
         .catch(error => {
-            // Log error details
             console.error('Activities refresh failed:', error);
             
-            // Customize error message based on status
-            const errorMessage = error.status === 403 
-                ? 'Access denied. Admin privileges required.'
-                : error.status === 401 
-                    ? 'Session expired. Please log in again.'
-                    : 'Failed to load activities. Please try again.';
-            
-            // Show error in container
+            // Show error in table
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-danger">
+                        <i class="mdi mdi-alert me-1"></i>
+                        Failed to load activities. Please try again.
+                    </td>
+                </tr>`;
+
+            // Show error alert
             const errorAlert = document.createElement('div');
             errorAlert.className = 'alert alert-danger alert-dismissible fade show mb-4';
             errorAlert.innerHTML = `
                 <div class="d-flex align-items-center">
                     <i class="mdi mdi-alert me-2"></i>
                     <div>
-                        <strong>Error:</strong> ${errorMessage}
-                        ${error.status !== 401 ? `
-                            <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2" 
-                                    onclick="event.preventDefault(); refreshActivities()">
-                                Try again
-                            </button>
-                        ` : ''}
+                        <strong>Error:</strong> Failed to load activities. Please try again.
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
             errorContainer.appendChild(errorAlert);
 
-            // Show error in table with specific message
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="text-center text-danger">
-                        <i class="mdi mdi-alert me-1"></i>
-                        ${errorMessage}
-                    </td>
-                </tr>
-            `;
-
-            // Announce error to screen reader
-            announceToScreenReader(errorMessage);
-
-            // If unauthorized, redirect after a short delay
-            if (error.status === 401) {
-                setTimeout(() => window.location.href = '/login', 2000);
-            }
-
+            announceToScreenReader('Failed to refresh activities');
             reject(error);
         })
         .finally(() => {
