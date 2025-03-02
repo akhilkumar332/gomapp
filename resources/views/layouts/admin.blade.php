@@ -240,7 +240,8 @@
             position: absolute;
             right: 0;
             top: calc(100% + 0.5rem);
-            min-width: 240px;
+            width: auto;
+            min-width: 180px;
             background: white;
             border: 1px solid #E5E7EB;
             border-radius: 0.5rem;
