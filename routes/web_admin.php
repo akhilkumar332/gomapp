@@ -8,6 +8,12 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ActivityLogController;
+
+// Dashboard Routes
+Route::prefix('dashboard')->group(function () {
+    Route::get('/metrics', [DashboardController::class, 'getMetricsData'])
+        ->name('admin.dashboard.metrics');
+});
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatusController;
 

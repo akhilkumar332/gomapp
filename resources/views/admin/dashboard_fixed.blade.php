@@ -1,7 +1,38 @@
-@extends('layouts.admin')
+ @extends('layouts.admin')
 
 @push('styles')
 <style>
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.error-message {
+    display: none;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+    background-color: rgba(239, 68, 68, 0.1);
+    color: rgb(239, 68, 68);
+    font-size: 0.875rem;
+}
+
+.error-message.active {
+    display: block;
+}
+
 :root {
     --primary-color-rgb: 139, 92, 246;    /* #8B5CF6 */
     --info-color-rgb: 59, 130, 246;       /* #3B82F6 */
@@ -33,8 +64,31 @@
 
 @section('content')
 <div class="container-fluid" id="dashboard-content">
+    <!-- Last Updated Timestamp -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Dashboard Overview</h4>
+        <div class="d-flex align-items-center">
+            <small class="text-muted me-3" id="lastUpdated"></small>
+            <button class="btn btn-sm btn-outline-primary" id="refreshDashboard">
+                <i class="mdi mdi-refresh me-1"></i>
+                <span>Refresh All</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" id="dashboardError">
+        An error occurred while updating the dashboard. Retrying...
+    </div>
+
     <!-- Statistics Cards -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4" id="metricsCards">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="metricsLoading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="card">
                 <div class="card-body">
@@ -45,7 +99,7 @@
                             </span>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $totalZones }}</h3>
+                            <h3 class="mb-1" data-metric="totalZones">{{ $totalZones }}</h3>
                             <p class="text-muted mb-0">Total Zones</p>
                         </div>
                     </div>
@@ -63,7 +117,7 @@
                             </span>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $activeDrivers }}</h3>
+                            <h3 class="mb-1" data-metric="activeDrivers">{{ $activeDrivers }}</h3>
                             <p class="text-muted mb-0">Active Drivers</p>
                         </div>
                     </div>
@@ -81,7 +135,7 @@
                             </span>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $totalLocations }}</h3>
+                            <h3 class="mb-1" data-metric="totalLocations">{{ $totalLocations }}</h3>
                             <p class="text-muted mb-0">Total Locations</p>
                         </div>
                     </div>
@@ -99,8 +153,81 @@
                             </span>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">₵{{ number_format($todayCollections, 2) }}</h3>
+                            <h3 class="mb-1" data-metric="todayCollections">₵{{ number_format($todayCollections, 2) }}</h3>
                             <p class="text-muted mb-0">Today's Collections</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New KPI Cards -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-info bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-clock-alert text-info" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="pendingDeliveries">{{ $pendingDeliveries ?? 0 }}</h3>
+                            <p class="text-muted mb-0">Pending Deliveries</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-danger bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-timer-alert text-danger" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="overdueDeliveries">{{ $overdueDeliveries ?? 0 }}</h3>
+                            <p class="text-muted mb-0">Overdue Deliveries</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-cash-multiple text-success" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="totalRevenue">₵{{ number_format($totalRevenue ?? 0, 2) }}</h3>
+                            <p class="text-muted mb-0">Total Revenue</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-chart-areaspline text-primary" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="averageRevenuePerDelivery">₵{{ number_format($averageRevenuePerDelivery ?? 0, 2) }}</h3>
+                            <p class="text-muted mb-0">Avg. Revenue/Delivery</p>
                         </div>
                     </div>
                 </div>
@@ -150,6 +277,14 @@
                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ $performanceMetrics['delivery_success_rate'] }}%"></div>
                         </div>
                         <p class="mt-2 mb-0">{{ $performanceMetrics['delivery_success_rate'] }}% Success Rate</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">On-Time Delivery Rate</h6>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ $performanceMetrics['on_time_delivery_rate'] }}%"></div>
+                        </div>
+                        <p class="mt-2 mb-0">{{ $performanceMetrics['on_time_delivery_rate'] }}% On-Time Rate</p>
                     </div>
 
                     <div class="mb-4">
@@ -243,6 +378,157 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Dashboard refresh functionality
+let refreshTimer = null;
+const REFRESH_INTERVAL = 30000; // 30 seconds
+
+function updateLastUpdated(timestamp) {
+    const lastUpdated = document.getElementById('lastUpdated');
+    const date = new Date(timestamp);
+    lastUpdated.textContent = `Last updated: ${date.toLocaleTimeString()}`;
+}
+
+function showLoading(show = true) {
+    const refreshBtn = document.getElementById('refreshDashboard');
+    const icon = refreshBtn.querySelector('.mdi-refresh');
+    const loadingOverlay = document.getElementById('metricsLoading');
+    const errorMessage = document.getElementById('dashboardError');
+    
+    refreshBtn.disabled = show;
+    if (show) {
+        icon.classList.add('mdi-spin');
+        loadingOverlay.classList.add('active');
+        errorMessage.classList.remove('active');
+    } else {
+        icon.classList.remove('mdi-spin');
+        loadingOverlay.classList.remove('active');
+    }
+}
+
+function showError(show = true) {
+    const errorMessage = document.getElementById('dashboardError');
+    errorMessage.classList.toggle('active', show);
+}
+
+function animateValue(element, start, end, duration = 500) {
+    if (start === end) return;
+    const range = end - start;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const value = Math.floor(start + (range * progress));
+        if (typeof end === 'number') {
+            element.textContent = value.toLocaleString();
+        } else {
+            element.textContent = end;
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+
+function updateMetrics(data) {
+    // Update basic metrics with animation
+    const metrics = data.basicMetrics;
+    Object.keys(metrics).forEach(key => {
+        const element = document.querySelector(`[data-metric="${key}"]`);
+        if (element) {
+            const currentValue = parseInt(element.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+            const newValue = metrics[key];
+            animateValue(element, currentValue, newValue);
+        }
+    });
+
+    // Update performance metrics
+    const performance = data.performanceMetrics;
+    if (performance.delivery_success_rate !== undefined) {
+        const rateElement = document.querySelector('.progress-bar');
+        if (rateElement) {
+            rateElement.style.width = `${performance.delivery_success_rate}%`;
+            document.querySelector('.progress + p').textContent = 
+                `${performance.delivery_success_rate}% Success Rate`;
+        }
+    }
+
+    // Update chart data
+    if (currentChart && data.deliveryChart) {
+        const activeView = document.querySelector('[data-view].active').dataset.view;
+        chartData[activeView] = {
+            labels: data.deliveryChart.labels,
+            datasets: activeView === 'deliveries' ? [
+                {
+                    label: 'Completed Deliveries',
+                    data: data.deliveryChart.completed,
+                    borderColor: 'rgb(139, 92, 246)',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Total Deliveries',
+                    data: data.deliveryChart.total,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2
+                }
+            ] : [
+                {
+                    label: 'Collections (₵)',
+                    data: data.deliveryChart.collections,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2
+                }
+            ]
+        };
+        initChart(activeView);
+    }
+
+    // Update activities table
+    if (data.recentActivities) {
+        const tbody = document.getElementById('activities-table-body');
+        tbody.innerHTML = data.recentActivities.map(activity => `
+            <tr>
+                <td>${activity.time}</td>
+                <td>${activity.user}</td>
+                <td>${activity.description}</td>
+                <td>
+                    <span class="badge bg-${activity.status_color}">${activity.status}</span>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+function refreshDashboard() {
+    showLoading(true);
+    
+    fetch('/admin/dashboard/metrics')
+        .then(response => response.json())
+        .then(response => {
+            if (response.success) {
+                updateMetrics(response.data);
+                updateLastUpdated(response.data.last_updated);
+            } else {
+                console.error('Failed to fetch metrics:', response.message);
+                showError(true);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing dashboard:', error);
+            showError(true);
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+}
+
 let currentChart = null;
 const chartData = {
     deliveries: {
@@ -337,9 +623,61 @@ function refreshActivities() {
         });
 }
 
+// Handle page visibility changes
+function handleVisibilityChange() {
+    if (document.hidden) {
+        // Clear the refresh interval when page is not visible
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+        }
+    } else {
+        // Refresh immediately and restart the interval when page becomes visible
+        if (!refreshTimer) {
+            refreshDashboard();
+            refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
+        }
+    }
+}
+
+// Cleanup function
+function cleanup() {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+    }
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize chart
     initChart('deliveries');
+    
+    // Initial data load
+    refreshDashboard();
+    
+    // Set up auto-refresh
+    refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
+    
+    // Set up visibility change handler
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up on page unload
+    window.addEventListener('unload', cleanup);
+    
+    // Manual refresh button
+    document.getElementById('refreshDashboard').addEventListener('click', () => {
+        // Clear existing timer
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+        }
+        
+        // Refresh immediately
+        refreshDashboard();
+        
+        // Reset the timer
+        refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
+    });
     
     // View toggle buttons
     document.querySelectorAll('[data-view]').forEach(button => {
