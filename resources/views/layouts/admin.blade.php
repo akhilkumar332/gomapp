@@ -218,9 +218,6 @@
             color: var(--secondary-color);
             font-weight: 500;
             font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             transition: all 0.2s;
         }
 
@@ -241,15 +238,54 @@
             right: 0;
             top: calc(100% + 0.5rem);
             width: auto;
-            min-width: 180px;
+            min-width: 280px;
             background: white;
             border: 1px solid #E5E7EB;
             border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             z-index: 1000;
-            padding: 0.5rem 0;
+            transform-origin: top right;
+            transition: all 0.2s ease-in-out;
         }
 
+        /* Quick action buttons */
+        .user-menu .btn-link {
+            color: var(--secondary-color);
+            transition: all 0.2s;
+            border-radius: 0.5rem;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-menu .btn-link:hover {
+            color: var(--primary-color);
+            background-color: #EDE9FE;
+            transform: translateY(-2px);
+        }
+
+        .user-menu .btn-link.text-danger:hover {
+            color: #DC2626;
+            background-color: #FEE2E2;
+        }
+
+        .user-menu .fs-4 {
+            font-size: 1.4rem !important;
+        }
+
+        /* User info section */
+        .user-menu .fs-1 {
+            font-size: 2.5rem !important;
+        }
+
+        .user-menu .fs-5 {
+            font-size: 1.15rem !important;
+        }
+
+        /* Menu items */
         .user-menu .dropdown-item {
             padding: 0.625rem 1rem;
             display: flex;
@@ -258,6 +294,39 @@
             text-decoration: none;
             font-size: 0.875rem;
             transition: all 0.2s;
+        }
+
+        .user-menu .dropdown-item:hover {
+            background-color: #EDE9FE;
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .user-menu .dropdown-item.text-danger:hover {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+
+        /* Dividers */
+        .user-menu .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: #E5E7EB;
+        }
+
+        /* Animation for dropdown */
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-menu .dropdown-menu.show {
+            animation: dropdownFade 0.2s ease-in-out;
         }
 
         .user-menu .dropdown-item i {
@@ -355,27 +424,45 @@
     <div class="main-content">
         <header class="header">
             <div class="user-menu">
-                <button type="button" class="btn" id="userMenuBtn">
-                    <i class="mdi mdi-account-circle"></i>
-                    <span>{{ Auth::user()->name }}</span>
+                <button type="button" class="btn d-flex align-items-center gap-2" id="userMenuBtn">
+                    <div class="d-flex align-items-center">
+                        <i class="mdi mdi-account-circle fs-5"></i>
+                        <span class="ms-2">{{ Auth::user()->name }}</span>
+                    </div>
                     <i class="mdi mdi-chevron-down"></i>
                 </button>
-                <ul class="dropdown-menu" id="userMenuDropdown" style="display: none;">
-                    <li>
-                        <a class="dropdown-item" href="https://{{ request()->getHost() }}{{ route('admin.profile', [], false) }}">
-                            <i class="mdi mdi-account me-2"></i> Profile
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form method="POST" action="https://{{ request()->getHost() }}{{ route('logout', [], false) }}">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="mdi mdi-logout me-2"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+                <div class="dropdown-menu" id="userMenuDropdown" style="display: none;">
+                    <!-- User Info Section -->
+                    <div class="px-3 py-2 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <i class="mdi mdi-account-circle fs-1 text-primary"></i>
+                            <div class="ms-2">
+                                <div class="fw-semibold">{{ Auth::user()->name }}</div>
+                                <div class="text-muted small">Administrator</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Menu Items -->
+                    <div class="py-2">
+                        <div class="d-flex justify-content-around">
+                            <a href="https://{{ request()->getHost() }}{{ route('admin.profile', [], false) }}" class="btn btn-link p-2" title="Profile">
+                                <i class="mdi mdi-account fs-4"></i>
+                            </a>
+                            <a href="#" class="btn btn-link p-2" title="Notifications">
+                                <i class="mdi mdi-bell-outline fs-4"></i>
+                            </a>
+                            <a href="#" class="btn btn-link p-2" title="Settings">
+                                <i class="mdi mdi-cog fs-4"></i>
+                            </a>
+                            <form method="POST" action="https://{{ request()->getHost() }}{{ route('logout', [], false) }}" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-link p-2 text-danger" title="Logout">
+                                    <i class="mdi mdi-power fs-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -400,20 +487,39 @@
             const userMenuDropdown = $('#userMenuDropdown');
             let isOpen = false;
 
+            function showDropdown() {
+                userMenuDropdown.show();
+                userMenuBtn.addClass('active');
+                userMenuDropdown.addClass('show');
+                isOpen = true;
+            }
+
+            function hideDropdown() {
+                userMenuDropdown.removeClass('show');
+                setTimeout(() => {
+                    if (!isOpen) {
+                        userMenuDropdown.hide();
+                    }
+                }, 200); // Match animation duration
+                userMenuBtn.removeClass('active');
+                isOpen = false;
+            }
+
             // Toggle dropdown on button click
             userMenuBtn.on('click', function(e) {
                 e.preventDefault();
-                isOpen = !isOpen;
-                userMenuDropdown.toggle(isOpen);
-                userMenuBtn.toggleClass('active', isOpen);
+                e.stopPropagation();
+                if (isOpen) {
+                    hideDropdown();
+                } else {
+                    showDropdown();
+                }
             });
 
             // Close dropdown when clicking outside
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('.user-menu').length) {
-                    isOpen = false;
-                    userMenuDropdown.hide();
-                    userMenuBtn.removeClass('active');
+                if (!$(e.target).closest('.user-menu').length && isOpen) {
+                    hideDropdown();
                 }
             });
 
@@ -421,11 +527,60 @@
             userMenuBtn.on('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    $(this).click();
+                    if (isOpen) {
+                        hideDropdown();
+                    } else {
+                        showDropdown();
+                    }
                 } else if (e.key === 'Escape' && isOpen) {
-                    isOpen = false;
-                    userMenuDropdown.hide();
-                    userMenuBtn.removeClass('active');
+                    hideDropdown();
+                }
+            });
+
+            // Handle dropdown item keyboard navigation
+            userMenuDropdown.on('keydown', '.dropdown-item', function(e) {
+                const items = userMenuDropdown.find('.dropdown-item');
+                const index = items.index(this);
+                
+                switch(e.key) {
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        if (index > 0) {
+                            items.eq(index - 1).focus();
+                        }
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        if (index < items.length - 1) {
+                            items.eq(index + 1).focus();
+                        }
+                        break;
+                    case 'Escape':
+                        e.preventDefault();
+                        hideDropdown();
+                        userMenuBtn.focus();
+                        break;
+                }
+            });
+
+            // Focus trap within dropdown when open
+            userMenuDropdown.on('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    const focusableElements = userMenuDropdown.find('a[href], button, [tabindex]:not([tabindex="-1"])');
+                    const firstElement = focusableElements.first();
+                    const lastElement = focusableElements.last();
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement[0]) {
+                            e.preventDefault();
+                            lastElement.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement[0]) {
+                            e.preventDefault();
+                            firstElement.focus();
+                        }
+                    }
                 }
             });
         });
