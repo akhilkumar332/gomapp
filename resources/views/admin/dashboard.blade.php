@@ -282,6 +282,57 @@
         }
     }
 
+    /* Tooltip Icon Styles */
+    .tooltip-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        font-style: normal;
+        font-size: 11px;
+        font-weight: 600;
+        color: #4B5563;
+        background-color: #E5E7EB;
+        border: 1px solid #D1D5DB;
+        border-radius: 50%;
+        cursor: help;
+        transition: all 0.15s ease-in-out;
+        margin-left: 8px;
+        margin-top: 6px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .tooltip-icon:hover {
+        color: #1F2937;
+        background-color: #D1D5DB;
+        border-color: #9CA3AF;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Custom tooltip style */
+    .tooltip.show {
+        opacity: 1;
+    }
+
+    .tooltip .tooltip-inner {
+        background-color: #1F2937;
+        color: #F9FAFB;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.5;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        max-width: 220px;
+        text-align: left;
+        border-radius: 4px;
+    }
+
+    .tooltip .tooltip-arrow::before {
+        border-top-color: #1F2937;
+    }
+
+
     /* Print Styles */
     @media print {
         .btn-group, .btn-icon {
@@ -517,8 +568,11 @@
                                 <i class="mdi mdi-map text-primary" style="font-size: 24px;"></i>
                             </span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $totalZones }}</h3>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0 me-2" data-metric="totalZones">{{ $totalZones }}</h3>
+                                <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Total number of zones available in the system">i</span>
+                            </div>
                             <p class="text-muted mb-0">Total Zones</p>
                         </div>
                     </div>
@@ -535,8 +589,11 @@
                                 <i class="mdi mdi-account-multiple text-success" style="font-size: 24px;"></i>
                             </span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $activeDrivers }}</h3>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0 me-2" data-metric="activeDrivers">{{ $activeDrivers }}</h3>
+                                <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Number of drivers currently active and available for deliveries">i</span>
+                            </div>
                             <p class="text-muted mb-0">Active Drivers</p>
                         </div>
                     </div>
@@ -553,8 +610,11 @@
                                 <i class="mdi mdi-map-marker text-info" style="font-size: 24px;"></i>
                             </span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">{{ $totalLocations }}</h3>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0 me-2" data-metric="totalLocations">{{ $totalLocations }}</h3>
+                                <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Total number of registered delivery locations in the system">i</span>
+                            </div>
                             <p class="text-muted mb-0">Total Locations</p>
                         </div>
                     </div>
@@ -571,8 +631,11 @@
                                 <i class="mdi mdi-currency-usd text-warning" style="font-size: 24px;"></i>
                             </span>
                         </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h3 class="mb-1">₵{{ number_format($todayCollections, 2) }}</h3>
+                        <div class="d-flex flex-column">
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0 me-2" data-metric="todayCollections">₵{{ number_format($todayCollections, 2) }}</h3>
+                                <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Total amount collected from deliveries today">i</span>
+                            </div>
                             <p class="text-muted mb-0">Today's Collections</p>
                         </div>
                     </div>
@@ -586,7 +649,10 @@
         <div class="col-12 col-lg-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Delivery Performance</h5>
+                    <h5 class="card-title mb-0 d-flex align-items-center">
+                        Delivery Performance
+                        <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Visual representation of delivery performance over time. Toggle between deliveries and collections view.">i</span>
+                    </h5>
                     <div class="d-flex align-items-center">
                         <div class="btn-group" role="group" aria-label="Chart view options">
                             <button type="button" class="btn btn-sm btn-outline-primary active" onclick="updateChartView('deliveries')" aria-pressed="true">
@@ -646,11 +712,17 @@
         <div class="col-12 col-lg-4">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Performance Metrics</h5>
+                    <h5 class="card-title mb-0 d-flex align-items-center">
+                        Performance Metrics
+                        <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Key performance indicators including success rate, delivery time, and weekly trends">i</span>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
-                        <h6 class="text-muted mb-2">Delivery Success Rate</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <h6 class="text-muted mb-0">Delivery Success Rate</h6>
+                            <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of successfully completed deliveries out of total deliveries">i</span>
+                        </div>
                         <div class="progress" style="height: 10px;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ $performanceMetrics['delivery_success_rate'] }}%"></div>
                         </div>
@@ -658,7 +730,10 @@
                     </div>
 
                     <div class="mb-4">
-                        <h6 class="text-muted mb-2">Average Delivery Time</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <h6 class="text-muted mb-0">Average Delivery Time</h6>
+                            <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Average time taken to complete a delivery from pickup to drop-off">i</span>
+                        </div>
                         <div class="d-flex align-items-center">
                             <span class="display-6 me-2">{{ round($performanceMetrics['average_delivery_time']) }}</span>
                             <span class="text-muted">minutes</span>
@@ -666,7 +741,10 @@
                     </div>
 
                     <div>
-                        <h6 class="text-muted mb-2">Weekly Trend</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <h6 class="text-muted mb-0">Weekly Trend</h6>
+                            <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Week-over-week comparison of delivery performance with percentage change">i</span>
+                        </div>
                         <div class="d-flex align-items-center">
                             @php
                                 $weeklyTrend = $performanceMetrics['weekly_trends']->last();
@@ -704,7 +782,10 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Zone Performance</h5>
+                    <h5 class="card-title mb-0 d-flex align-items-center">
+                        Zone Performance
+                        <span class="tooltip-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Detailed breakdown of deliveries and collections performance by zone">i</span>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -790,7 +871,8 @@
 @endsection
 
 @push('scripts')
-<!-- Load Chart.js first -->
+<!-- Load Bootstrap and Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- Dashboard initialization -->
 <script>
@@ -856,6 +938,27 @@ const initializeDashboard = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].forEach(tooltipTriggerEl => {
+        new bootstrap.Tooltip(tooltipTriggerEl, {
+            trigger: 'hover focus',
+            animation: true,
+            delay: { show: 50, hide: 100 },
+            offset: [0, 5],
+            placement: 'top',
+            container: 'body'
+        });
+    });
+
+    // Cleanup tooltips before page unload
+    window.addEventListener('beforeunload', () => {
+        tooltipTriggerList.forEach(el => {
+            const tooltip = bootstrap.Tooltip.getInstance(el);
+            if (tooltip) tooltip.dispose();
+        });
+    });
+
     // Initialize click handlers
     const viewButtons = document.querySelectorAll('.btn-group .btn');
     viewButtons.forEach(button => {
