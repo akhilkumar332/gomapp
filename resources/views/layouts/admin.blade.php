@@ -14,8 +14,10 @@
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
-    <!-- Styles -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Other Styles -->
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     
@@ -188,6 +190,103 @@
             font-size: 2rem;
             line-height: 1;
         }
+
+        /* Header and User Menu Styles */
+        .header {
+            background: white;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            height: var(--header-height);
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            z-index: 99;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-menu .btn {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--secondary-color);
+            font-weight: 500;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .user-menu .btn:hover,
+        .user-menu .btn:focus,
+        .user-menu .btn.active {
+            color: var(--primary-color);
+            background-color: #EDE9FE;
+            border-radius: 0.375rem;
+        }
+
+        .user-menu .btn i {
+            font-size: 1.25rem;
+        }
+
+        .user-menu .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-width: 240px;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 0.5rem 0;
+        }
+
+        .user-menu .dropdown-item {
+            padding: 0.625rem 1rem;
+            display: flex;
+            align-items: center;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .user-menu .dropdown-item i {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .user-menu .dropdown-item:hover {
+            background-color: #EDE9FE;
+            color: var(--primary-color);
+        }
+
+        .user-menu .dropdown-item:hover i {
+            opacity: 1;
+        }
+
+        .user-menu .dropdown-divider {
+            margin: 0.5rem 0;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .user-menu .dropdown-item.text-danger {
+            color: #DC2626;
+        }
+
+        .user-menu .dropdown-item.text-danger:hover {
+            background-color: #FEF2F2;
+        }
     </style>
 
     @stack('styles')
@@ -195,56 +294,56 @@
 <body>
     <nav class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ route('admin.dashboard') }}" class="sidebar-logo">
+            <a href="https://{{ request()->getHost() }}{{ route('admin.dashboard', [], false) }}" class="sidebar-logo">
                 {{ config('app.name', 'Delivery Management') }}
             </a>
         </div>
 
         <div class="sidebar-nav">
             <div class="nav-item">
-                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.dashboard', [], false) }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <i class="mdi mdi-view-dashboard"></i>
                     <span>Dashboard</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.drivers.index') }}" class="nav-link {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.drivers.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.drivers.*') ? 'active' : '' }}">
                     <i class="mdi mdi-account-multiple"></i>
                     <span>Drivers</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.zones.index') }}" class="nav-link {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.zones.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.zones.*') ? 'active' : '' }}">
                     <i class="mdi mdi-map"></i>
                     <span>Zones</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.locations.index') }}" class="nav-link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.locations.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}">
                     <i class="mdi mdi-map-marker"></i>
                     <span>Locations</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.reports.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                     <i class="mdi mdi-chart-bar"></i>
                     <span>Reports</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.status.index') }}" class="nav-link {{ request()->routeIs('admin.status.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.status.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.status.*') ? 'active' : '' }}">
                     <i class="mdi mdi-server"></i>
                     <span>Status</span>
                 </a>
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.settings.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
                     <i class="mdi mdi-cog"></i>
                     <span>Settings</span>
                 </a>
@@ -254,20 +353,21 @@
 
     <div class="main-content">
         <header class="header">
-            <div class="flex-grow-1"></div>
-            <div class="dropdown">
-                <button class="btn btn-link dropdown-toggle text-decoration-none" type="button" data-bs-toggle="dropdown">
-                    {{ Auth::user()->name }}
+            <div class="user-menu">
+                <button type="button" class="btn" id="userMenuBtn">
+                    <i class="mdi mdi-account-circle"></i>
+                    <span>{{ Auth::user()->name }}</span>
+                    <i class="mdi mdi-chevron-down"></i>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu" id="userMenuDropdown" style="display: none;">
                     <li>
-                        <a class="dropdown-item" href="{{ route('admin.profile') }}">
+                        <a class="dropdown-item" href="https://{{ request()->getHost() }}{{ route('admin.profile', [], false) }}">
                             <i class="mdi mdi-account me-2"></i> Profile
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <form method="POST" action="{{ url()->secure(route('logout', [], false)) }}">
+                        <form method="POST" action="https://{{ request()->getHost() }}{{ route('logout', [], false) }}">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="mdi mdi-logout me-2"></i> Logout
@@ -283,32 +383,49 @@
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- jQuery first, then Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Other Scripts -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <!-- Initialize Bootstrap Components -->
+    <!-- Custom dropdown handling -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize dropdowns
-            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
-            dropdownElementList.map(function (dropdownToggleEl) {
-                return new bootstrap.Dropdown(dropdownToggleEl);
+        $(document).ready(function() {
+            const userMenuBtn = $('#userMenuBtn');
+            const userMenuDropdown = $('#userMenuDropdown');
+            let isOpen = false;
+
+            // Toggle dropdown on button click
+            userMenuBtn.on('click', function(e) {
+                e.preventDefault();
+                isOpen = !isOpen;
+                userMenuDropdown.toggle(isOpen);
+                userMenuBtn.toggleClass('active', isOpen);
             });
 
-            // Initialize tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+            // Close dropdown when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.user-menu').length) {
+                    isOpen = false;
+                    userMenuDropdown.hide();
+                    userMenuBtn.removeClass('active');
+                }
             });
 
-            // Initialize popovers
-            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl);
+            // Handle keyboard navigation
+            userMenuBtn.on('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    $(this).click();
+                } else if (e.key === 'Escape' && isOpen) {
+                    isOpen = false;
+                    userMenuDropdown.hide();
+                    userMenuBtn.removeClass('active');
+                }
             });
         });
     </script>
