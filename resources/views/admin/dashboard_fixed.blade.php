@@ -458,11 +458,8 @@ h6 .tooltip-icon {
         <div class="col-12 col-lg-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0 d-flex align-items-center">
-                        Delivery Performance
-                        <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Visual representation of delivery performance and collections over time">i</span>
-                    </h5>
-                    <div class="d-flex align-items-center">
+                    <h5 class="card-title mb-0">Delivery Performance</h5>
+                    <div class="d-flex align-items-center gap-2">
                         <div class="btn-group" role="group" aria-label="Chart view options">
                             <button type="button" class="btn btn-sm btn-outline-primary active" data-view="deliveries">
                                 <i class="mdi mdi-truck-delivery me-1"></i>
@@ -473,9 +470,10 @@ h6 .tooltip-icon {
                                 <span>Collections</span>
                             </button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-icon btn-outline-secondary ms-2" id="refreshChart">
+                        <button type="button" class="btn btn-sm btn-icon btn-outline-secondary" id="refreshChart">
                             <i class="mdi mdi-refresh"></i>
                         </button>
+                        <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Visual representation of delivery performance and collections over time">i</span>
                     </div>
                 </div>
                 <div class="card-body p-0 h-100">
@@ -489,16 +487,16 @@ h6 .tooltip-icon {
         <div class="col-12 col-lg-4">
             <div class="card h-100">
                 <div class="card-header">
-                    <h5 class="card-title mb-0 d-flex align-items-center">
-                        Performance Metrics
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Performance Metrics</h5>
                         <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Key performance indicators showing delivery success, timing, and efficiency">i</span>
-                    </h5>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h6 class="text-muted mb-0">Delivery Success Rate</h6>
-                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="left" title="Percentage of deliveries successfully completed out of total deliveries">i</span>
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of deliveries successfully completed out of total deliveries">i</span>
                         </div>
                         <div class="progress" style="height: 10px;">
                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ $performanceMetrics['delivery_success_rate'] }}%"></div>
@@ -509,7 +507,7 @@ h6 .tooltip-icon {
                     <div class="mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h6 class="text-muted mb-0">On-Time Delivery Rate</h6>
-                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="left" title="Percentage of deliveries completed within scheduled time">i</span>
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Percentage of deliveries completed within scheduled time">i</span>
                         </div>
                         <div class="progress" style="height: 10px;">
                             <div class="progress-bar bg-info" role="progressbar" style="width: {{ $performanceMetrics['on_time_delivery_rate'] }}%"></div>
@@ -520,7 +518,7 @@ h6 .tooltip-icon {
                     <div class="mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h6 class="text-muted mb-0">Average Delivery Time</h6>
-                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="left" title="Average time taken to complete a delivery from pickup to drop-off">i</span>
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Average time taken to complete a delivery from pickup to drop-off">i</span>
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="display-6 me-2">{{ round($performanceMetrics['average_delivery_time']) }}</span>
@@ -531,7 +529,7 @@ h6 .tooltip-icon {
                     <div class="mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h6 class="text-muted mb-0">Efficiency Index</h6>
-                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="left" title="Revenue generated per minute of delivery time">i</span>
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Revenue generated per minute of delivery time">i</span>
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="display-6 me-2">₵{{ number_format($performanceMetrics['efficiency_index'], 2) }}</span>
@@ -542,7 +540,7 @@ h6 .tooltip-icon {
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <h6 class="text-muted mb-0">Weekly Trend</h6>
-                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="left" title="Week-over-week comparison of delivery performance with percentage change">i</span>
+                            <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Week-over-week comparison of delivery performance with percentage change">i</span>
                         </div>
                         <div class="d-flex align-items-center">
                             @php
