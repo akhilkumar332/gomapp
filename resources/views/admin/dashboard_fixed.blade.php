@@ -43,8 +43,9 @@
 
 .chart-container {
     position: relative;
-    height: 300px;
+    height: calc(100% - 2rem); /* Subtract padding */
     width: 100%;
+    min-height: 400px;
 }
 
 .chart-error {
@@ -233,6 +234,105 @@
                 </div>
             </div>
         </div>
+
+        <!-- New Business KPI Cards -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-account-group text-success" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="driver_utilization_rate">{{ $performanceMetrics['driver_utilization_rate'] ?? 0 }}%</h3>
+                            <p class="text-muted mb-0">Driver Utilization</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-danger bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-clock-alert text-danger" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="delivery_delay_rate">{{ $performanceMetrics['delivery_delay_rate'] ?? 0 }}%</h3>
+                            <p class="text-muted mb-0">Delay Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-info bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-trending-up text-info" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="revenue_growth_rate">
+                                <span class="{{ ($performanceMetrics['revenue_growth_rate'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ ($performanceMetrics['revenue_growth_rate'] ?? 0) >= 0 ? '+' : '' }}{{ $performanceMetrics['revenue_growth_rate'] ?? 0 }}%
+                                </span>
+                            </h3>
+                            <p class="text-muted mb-0">Revenue Growth</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-warning bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-speedometer text-warning" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="efficiency_index">₵{{ number_format($performanceMetrics['efficiency_index'] ?? 0, 2) }}</h3>
+                            <p class="text-muted mb-0">Revenue/Minute</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <span class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                <i class="mdi mdi-chart-bar text-primary" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="mb-1" data-metric="delivery_volume_growth">
+                                <span class="{{ ($performanceMetrics['delivery_volume_trend']['growth'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ ($performanceMetrics['delivery_volume_trend']['growth'] ?? 0) >= 0 ? '+' : '' }}{{ $performanceMetrics['delivery_volume_trend']['growth'] ?? 0 }}%
+                                </span>
+                            </h3>
+                            <p class="text-muted mb-0">Volume Growth</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Performance Metrics -->
@@ -257,8 +357,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="chart-container p-4">
+                <div class="card-body p-0 h-100">
+                    <div class="chart-container p-3">
                         <canvas id="deliveryChart"></canvas>
                     </div>
                 </div>
@@ -295,6 +395,14 @@
                         </div>
                     </div>
 
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Efficiency Index</h6>
+                        <div class="d-flex align-items-center">
+                            <span class="display-6 me-2">₵{{ number_format($performanceMetrics['efficiency_index'], 2) }}</span>
+                            <span class="text-muted">/min</span>
+                        </div>
+                    </div>
+
                     <div>
                         <h6 class="text-muted mb-2">Weekly Trend</h6>
                         <div class="d-flex align-items-center">
@@ -328,59 +436,49 @@
             </div>
         </div>
     </div>
-
-    <!-- Recent Activities -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Recent Activities</h5>
-            <button class="btn btn-sm btn-outline-primary" id="refreshActivities">
-                <i class="mdi mdi-refresh"></i> Refresh
-            </button>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>User</th>
-                            <th>Activity</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="activities-table-body">
-                        @foreach($recentActivities as $activity)
-                            <tr>
-                                <td>{{ $activity->created_at->diffForHumans() }}</td>
-                                <td>{{ $activity->user ? $activity->user->name : 'System' }}</td>
-                                <td>{{ $activity->description }}</td>
-                                <td>
-                                    @if($activity->status === 'success')
-                                        <span class="badge bg-success">Success</span>
-                                    @elseif($activity->status === 'warning')
-                                        <span class="badge bg-warning">Warning</span>
-                                    @elseif($activity->status === 'error')
-                                        <span class="badge bg-danger">Error</span>
-                                    @else
-                                        <span class="badge bg-secondary">Info</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Dashboard refresh functionality
+// Global variables and initialization
+let currentChart = null;
 let refreshTimer = null;
 const REFRESH_INTERVAL = 30000; // 30 seconds
+
+// Initialize chart data structure
+window.chartData = {
+    deliveries: {
+        labels: {!! json_encode($deliveryChart['labels']) !!},
+        datasets: [{
+            label: 'Completed Deliveries',
+            data: {!! json_encode($deliveryChart['completed']) !!},
+            borderColor: 'rgb(139, 92, 246)',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            borderWidth: 2,
+            tension: 0.4
+        }, {
+            label: 'Total Deliveries',
+            data: {!! json_encode($deliveryChart['total']) !!},
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            tension: 0.4
+        }]
+    },
+    collections: {
+        labels: {!! json_encode($deliveryChart['labels']) !!},
+        datasets: [{
+            label: 'Collections (₵)',
+            data: {!! json_encode($deliveryChart['collections']) !!},
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            tension: 0.4
+        }]
+    }
+};
 
 function updateLastUpdated(timestamp) {
     const lastUpdated = document.getElementById('lastUpdated');
@@ -434,77 +532,179 @@ function animateValue(element, start, end, duration = 500) {
     requestAnimationFrame(update);
 }
 
-function updateMetrics(data) {
-    // Update basic metrics with animation
-    const metrics = data.basicMetrics;
-    Object.keys(metrics).forEach(key => {
-        const element = document.querySelector(`[data-metric="${key}"]`);
-        if (element) {
-            const currentValue = parseInt(element.textContent.replace(/[^0-9.-]+/g, '')) || 0;
-            const newValue = metrics[key];
-            animateValue(element, currentValue, newValue);
-        }
-    });
-
-    // Update performance metrics
-    const performance = data.performanceMetrics;
-    if (performance.delivery_success_rate !== undefined) {
-        const rateElement = document.querySelector('.progress-bar');
-        if (rateElement) {
-            rateElement.style.width = `${performance.delivery_success_rate}%`;
-            document.querySelector('.progress + p').textContent = 
-                `${performance.delivery_success_rate}% Success Rate`;
-        }
-    }
-
-    // Update chart data
-    if (currentChart && data.deliveryChart) {
-        const activeView = document.querySelector('[data-view].active').dataset.view;
-        chartData[activeView] = {
-            labels: data.deliveryChart.labels,
-            datasets: activeView === 'deliveries' ? [
-                {
-                    label: 'Completed Deliveries',
-                    data: data.deliveryChart.completed,
-                    borderColor: 'rgb(139, 92, 246)',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    borderWidth: 2
-                },
-                {
-                    label: 'Total Deliveries',
-                    data: data.deliveryChart.total,
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2
+// Update functions
+function updateBasicMetrics(metrics) {
+    try {
+        Object.keys(metrics).forEach(key => {
+            const element = document.querySelector(`[data-metric="${key}"]`);
+            if (element) {
+                const currentValue = parseFloat(element.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                const newValue = metrics[key];
+                
+                if (key.includes('revenue') || key === 'todayCollections') {
+                    element.textContent = `₵${newValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                } else {
+                    animateValue(element, currentValue, newValue);
                 }
-            ] : [
-                {
-                    label: 'Collections (₵)',
-                    data: data.deliveryChart.collections,
-                    borderColor: 'rgb(16, 185, 129)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 2
-                }
-            ]
-        };
-        initChart(activeView);
-    }
-
-    // Update activities table
-    if (data.recentActivities) {
-        const tbody = document.getElementById('activities-table-body');
-        tbody.innerHTML = data.recentActivities.map(activity => `
-            <tr>
-                <td>${activity.time}</td>
-                <td>${activity.user}</td>
-                <td>${activity.description}</td>
-                <td>
-                    <span class="badge bg-${activity.status_color}">${activity.status}</span>
-                </td>
-            </tr>
-        `).join('');
+            }
+        });
+    } catch (error) {
+        console.error('Error updating basic metrics:', error);
     }
 }
+
+function updatePerformanceMetrics(performance) {
+    try {
+        // Update success rate progress bar
+        if (performance.delivery_success_rate !== undefined) {
+            const rateElement = document.querySelector('.progress-bar');
+            if (rateElement) {
+                rateElement.style.width = `${performance.delivery_success_rate}%`;
+                document.querySelector('.progress + p').textContent = 
+                    `${performance.delivery_success_rate}% Success Rate`;
+            }
+        }
+
+        // Update new KPIs
+        if (performance.driver_utilization_rate !== undefined) {
+            updateMetricValue('driver_utilization_rate', performance.driver_utilization_rate, '%');
+        }
+
+        if (performance.delivery_delay_rate !== undefined) {
+            updateMetricValue('delivery_delay_rate', performance.delivery_delay_rate, '%');
+        }
+
+        if (performance.revenue_growth_rate !== undefined) {
+            const element = document.querySelector('[data-metric="revenue_growth_rate"] span');
+            if (element) {
+                const value = performance.revenue_growth_rate;
+                element.className = value >= 0 ? 'text-success' : 'text-danger';
+                element.textContent = `${value >= 0 ? '+' : ''}${value}%`;
+            }
+        }
+
+        if (performance.efficiency_index !== undefined) {
+            updateMetricValue('efficiency_index', performance.efficiency_index, '', '₵');
+        }
+
+        if (performance.delivery_volume_trend !== undefined) {
+            const element = document.querySelector('[data-metric="delivery_volume_growth"] span');
+            if (element) {
+                const growth = performance.delivery_volume_trend.growth;
+                element.className = growth >= 0 ? 'text-success' : 'text-danger';
+                element.textContent = `${growth >= 0 ? '+' : ''}${growth}%`;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating performance metrics:', error);
+    }
+}
+
+function updateMetrics(data) {
+    try {
+        // Update basic metrics
+        updateBasicMetrics(data.basicMetrics);
+        
+        // Update performance metrics
+        updatePerformanceMetrics(data.performanceMetrics);
+        
+        // Update chart data
+        updateChartData(data);
+        
+    } catch (error) {
+        console.error('Error updating metrics:', error);
+    }
+}
+
+// Helper function to update metric values with proper formatting
+function updateMetricValue(metric, value, suffix = '', prefix = '') {
+    try {
+        const element = document.querySelector(`[data-metric="${metric}"]`);
+        if (element) {
+            const currentValue = parseFloat(element.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+            if (typeof value === 'number' && !isNaN(value)) {
+                if (prefix || suffix) {
+                    element.textContent = `${prefix}${value.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}${suffix}`;
+                } else {
+                    animateValue(element, currentValue, value);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error updating metric value:', error);
+    }
+}
+
+    // Update chart data
+    function updateChartData(data) {
+        try {
+            if (currentChart && data.deliveryChart) {
+                const activeView = document.querySelector('[data-view].active')?.dataset.view;
+                if (activeView) {
+                    window.chartData[activeView] = {
+                        labels: data.deliveryChart.labels || [],
+                        datasets: activeView === 'deliveries' ? [
+                            {
+                                label: 'Completed Deliveries',
+                                data: data.deliveryChart.completed || [],
+                                borderColor: 'rgb(139, 92, 246)',
+                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Total Deliveries',
+                                data: data.deliveryChart.total || [],
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }
+                        ] : [
+                            {
+                                label: 'Collections (₵)',
+                                data: data.deliveryChart.collections || [],
+                                borderColor: 'rgb(16, 185, 129)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.4
+                            }
+                        ]
+                    };
+                    
+                    if (currentChart) {
+                        currentChart.destroy();
+                    }
+                    initChart(activeView);
+                }
+            }
+        } catch (error) {
+            console.error('Error updating chart data:', error);
+        }
+    }
+
+    // Update metrics and data
+    function updateMetrics(data) {
+        try {
+            // Update basic metrics
+            updateBasicMetrics(data.basicMetrics);
+            
+            // Update performance metrics
+            updatePerformanceMetrics(data.performanceMetrics);
+            
+            // Update chart data
+            updateChartData(data);
+            
+            // Update activities table
+            updateActivitiesTable(data.recentActivities);
+            
+        } catch (error) {
+            console.error('Error updating metrics:', error);
+        }
+    }
 
 function refreshDashboard() {
     showLoading(true);
@@ -529,98 +729,86 @@ function refreshDashboard() {
         });
 }
 
-let currentChart = null;
-const chartData = {
-    deliveries: {
-        labels: {!! json_encode($deliveryChart['labels']) !!},
-        datasets: [{
-            label: 'Completed Deliveries',
-            data: {!! json_encode($deliveryChart['completed']) !!},
-            borderColor: 'rgb(139, 92, 246)',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            borderWidth: 2
-        }, {
-            label: 'Total Deliveries',
-            data: {!! json_encode($deliveryChart['total']) !!},
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 2
-        }]
-    },
-    collections: {
-        labels: {!! json_encode($deliveryChart['labels']) !!},
-        datasets: [{
-            label: 'Collections (₵)',
-            data: {!! json_encode($deliveryChart['collections']) !!},
-            borderColor: 'rgb(16, 185, 129)',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            borderWidth: 2
-        }]
-    }
-};
+// Remove duplicate declaration since it's already declared at the top
 
 function initChart(view) {
-    const ctx = document.getElementById('deliveryChart').getContext('2d');
-    
-    if (currentChart) {
-        currentChart.destroy();
-    }
+    try {
+        const ctx = document.getElementById('deliveryChart')?.getContext('2d');
+        if (!ctx) {
+            console.error('Chart context not found');
+            return;
+        }
 
-    currentChart = new Chart(ctx, {
-        type: 'line',
-        data: chartData[view],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            if (view === 'collections') {
-                                return '₵' + value;
+        if (currentChart) {
+            currentChart.destroy();
+        }
+
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: window.chartData[view],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        right: 20,
+                        bottom: 10,
+                        left: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (view === 'collections') {
+                                    label += '₵' + context.parsed.y.toLocaleString();
+                                } else {
+                                    label += context.parsed.y.toLocaleString();
+                                }
+                                return label;
                             }
-                            return value;
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (view === 'collections') {
+                                    return '₵' + value.toLocaleString();
+                                }
+                                return value.toLocaleString();
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-}
-
-function refreshActivities() {
-    const tbody = document.getElementById('activities-table-body');
-    const refreshBtn = document.getElementById('refreshActivities');
-    const refreshIcon = refreshBtn.querySelector('.mdi-refresh');
-    
-    refreshBtn.disabled = true;
-    refreshIcon.classList.add('mdi-spin');
-    
-    fetch('/admin/dashboard/activities')
-        .then(response => response.json())
-        .then(data => {
-            tbody.innerHTML = data.activities.map(activity => `
-                <tr>
-                    <td>${activity.time}</td>
-                    <td>${activity.user}</td>
-                    <td>${activity.description}</td>
-                    <td>
-                        <span class="badge bg-${activity.status_color}">${activity.status}</span>
-                    </td>
-                </tr>
-            `).join('');
-        })
-        .catch(error => console.error('Failed to refresh activities:', error))
-        .finally(() => {
-            refreshBtn.disabled = false;
-            refreshIcon.classList.remove('mdi-spin');
         });
+    } catch (error) {
+        console.error('Error initializing chart:', error);
+    }
 }
 
 // Handle page visibility changes
@@ -650,54 +838,80 @@ function cleanup() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize chart
-    initChart('deliveries');
-    
-    // Initial data load
-    refreshDashboard();
-    
-    // Set up auto-refresh
-    refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
-    
-    // Set up visibility change handler
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Clean up on page unload
-    window.addEventListener('unload', cleanup);
-    
-    // Manual refresh button
-    document.getElementById('refreshDashboard').addEventListener('click', () => {
-        // Clear existing timer
-        if (refreshTimer) {
-            clearInterval(refreshTimer);
-        }
+    try {
+        // Initialize chart data object if not exists
+        window.chartData = window.chartData || {
+            deliveries: {
+                labels: [],
+                datasets: []
+            },
+            collections: {
+                labels: [],
+                datasets: []
+            }
+        };
+
+        // Initialize chart
+        initChart('deliveries');
         
-        // Refresh immediately
+        // Initial data load
         refreshDashboard();
         
-        // Reset the timer
+        // Set up auto-refresh
         refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
-    });
-    
-    // View toggle buttons
-    document.querySelectorAll('[data-view]').forEach(button => {
-        button.addEventListener('click', function() {
-            document.querySelectorAll('[data-view]').forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            initChart(this.dataset.view);
+        
+        // Set up visibility change handler
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Clean up on page unload
+        window.addEventListener('unload', cleanup);
+        
+        // Manual refresh button
+        document.getElementById('refreshDashboard')?.addEventListener('click', () => {
+            try {
+                // Clear existing timer
+                if (refreshTimer) {
+                    clearInterval(refreshTimer);
+                }
+                
+                // Refresh immediately
+                refreshDashboard();
+                
+                // Reset the timer
+                refreshTimer = setInterval(refreshDashboard, REFRESH_INTERVAL);
+            } catch (error) {
+                console.error('Error in refresh button handler:', error);
+            }
         });
-    });
-    
-    // Refresh buttons
-    document.getElementById('refreshChart').addEventListener('click', function() {
-        const activeView = document.querySelector('[data-view].active').dataset.view;
-        initChart(activeView);
-    });
-    
-    document.getElementById('refreshActivities').addEventListener('click', refreshActivities);
-    
-    // Auto-refresh activities
-    setInterval(refreshActivities, 60000);
+        
+        // Initialize view toggle buttons
+        document.querySelectorAll('[data-view]').forEach(button => {
+            button.addEventListener('click', function() {
+                try {
+                    document.querySelectorAll('[data-view]').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    initChart(this.dataset.view);
+                } catch (error) {
+                    console.error('Error in view toggle handler:', error);
+                }
+            });
+        });
+        
+        // Refresh buttons
+        document.getElementById('refreshChart')?.addEventListener('click', function() {
+            try {
+                const activeView = document.querySelector('[data-view].active')?.dataset.view;
+                if (activeView) {
+                    initChart(activeView);
+                }
+            } catch (error) {
+                console.error('Error refreshing chart:', error);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error in DOMContentLoaded:', error);
+    }
 });
 </script>
 @endpush

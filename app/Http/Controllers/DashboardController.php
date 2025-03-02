@@ -25,23 +25,37 @@ class DashboardController extends Controller
             
             // Basic metrics with caching
             $basicMetrics = Cache::remember($cacheKey, 3600, function () {
-                $totalRevenue = $this->getTotalRevenue();
-                return [
-                    'totalZones' => Zone::count(),
-                    'activeDrivers' => User::where('role', 'driver')
-                        ->whereNotNull('last_location_update')
-                        ->where('last_location_update', '>=', now()->subHour())
-                        ->count(),
-                    'totalLocations' => Location::count(),
-                    'todayCollections' => Location::whereDate('completed_at', today())
-                        ->where('status', 'completed')
-                        ->where('payment_received', true)
-                        ->sum('payment_amount_received') ?? 0,
-                    'pendingDeliveries' => $this->getPendingDeliveries(),
-                    'overdueDeliveries' => $this->getOverdueDeliveries(),
-                    'totalRevenue' => $totalRevenue,
-                    'averageRevenuePerDelivery' => $this->getAverageRevenuePerDelivery(),
-                ];
+                try {
+                    $totalRevenue = $this->getTotalRevenue();
+                    return [
+                        'totalZones' => Zone::count(),
+                        'activeDrivers' => User::where('role', 'driver')
+                            ->whereNotNull('last_location_update')
+                            ->where('last_location_update', '>=', now()->subHour())
+                            ->count(),
+                        'totalLocations' => Location::count(),
+                        'todayCollections' => Location::whereDate('completed_at', today())
+                            ->where('status', 'completed')
+                            ->where('payment_received', true)
+                            ->sum('payment_amount_received') ?? 0,
+                        'pendingDeliveries' => $this->getPendingDeliveries(),
+                        'overdueDeliveries' => $this->getOverdueDeliveries(),
+                        'totalRevenue' => $totalRevenue,
+                        'averageRevenuePerDelivery' => $this->getAverageRevenuePerDelivery()
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error calculating basic metrics: ' . $e->getMessage());
+                    return [
+                        'totalZones' => 0,
+                        'activeDrivers' => 0,
+                        'totalLocations' => 0,
+                        'todayCollections' => 0,
+                        'pendingDeliveries' => 0,
+                        'overdueDeliveries' => 0,
+                        'totalRevenue' => 0,
+                        'averageRevenuePerDelivery' => 0
+                    ];
+                }
             });
 
             // Get recent activities
@@ -58,6 +72,11 @@ class DashboardController extends Controller
                 'driver_performance' => $this->getDriverPerformance(),
                 'weekly_trends' => $this->getWeeklyTrends(),
                 'on_time_delivery_rate' => $this->getOnTimeDeliveryRate(),
+                'driver_utilization_rate' => $this->getDriverUtilizationRate(),
+                'delivery_delay_rate' => $this->getDeliveryDelayRate(),
+                'revenue_growth_rate' => $this->getRevenueGrowthRate(),
+                'efficiency_index' => $this->getEfficiencyIndex(),
+                'delivery_volume_trend' => $this->getDeliveryVolumeTrend(),
             ];
 
             // Enhanced delivery chart data with weekly comparison
@@ -91,23 +110,37 @@ class DashboardController extends Controller
         try {
             // Basic metrics with shorter cache duration for real-time updates
             $basicMetrics = Cache::remember('dashboard_metrics_realtime', 30, function () {
-                $totalRevenue = $this->getTotalRevenue();
-                return [
-                    'totalZones' => Zone::count(),
-                    'activeDrivers' => User::where('role', 'driver')
-                        ->whereNotNull('last_location_update')
-                        ->where('last_location_update', '>=', now()->subHour())
-                        ->count(),
-                    'totalLocations' => Location::count(),
-                    'todayCollections' => Location::whereDate('completed_at', today())
-                        ->where('status', 'completed')
-                        ->where('payment_received', true)
-                        ->sum('payment_amount_received') ?? 0,
-                    'pendingDeliveries' => $this->getPendingDeliveries(),
-                    'overdueDeliveries' => $this->getOverdueDeliveries(),
-                    'totalRevenue' => $totalRevenue,
-                    'averageRevenuePerDelivery' => $this->getAverageRevenuePerDelivery(),
-                ];
+                try {
+                    $totalRevenue = $this->getTotalRevenue();
+                    return [
+                        'totalZones' => Zone::count(),
+                        'activeDrivers' => User::where('role', 'driver')
+                            ->whereNotNull('last_location_update')
+                            ->where('last_location_update', '>=', now()->subHour())
+                            ->count(),
+                        'totalLocations' => Location::count(),
+                        'todayCollections' => Location::whereDate('completed_at', today())
+                            ->where('status', 'completed')
+                            ->where('payment_received', true)
+                            ->sum('payment_amount_received') ?? 0,
+                        'pendingDeliveries' => $this->getPendingDeliveries(),
+                        'overdueDeliveries' => $this->getOverdueDeliveries(),
+                        'totalRevenue' => $totalRevenue,
+                        'averageRevenuePerDelivery' => $this->getAverageRevenuePerDelivery()
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error calculating basic metrics: ' . $e->getMessage());
+                    return [
+                        'totalZones' => 0,
+                        'activeDrivers' => 0,
+                        'totalLocations' => 0,
+                        'todayCollections' => 0,
+                        'pendingDeliveries' => 0,
+                        'overdueDeliveries' => 0,
+                        'totalRevenue' => 0,
+                        'averageRevenuePerDelivery' => 0
+                    ];
+                }
             });
 
             // Get recent activities
@@ -138,6 +171,11 @@ class DashboardController extends Controller
                 'driver_performance' => $this->getDriverPerformance(),
                 'weekly_trends' => $this->getWeeklyTrends(),
                 'on_time_delivery_rate' => $this->getOnTimeDeliveryRate(),
+                'driver_utilization_rate' => $this->getDriverUtilizationRate(),
+                'delivery_delay_rate' => $this->getDeliveryDelayRate(),
+                'revenue_growth_rate' => $this->getRevenueGrowthRate(),
+                'efficiency_index' => $this->getEfficiencyIndex(),
+                'delivery_volume_trend' => $this->getDeliveryVolumeTrend(),
             ];
 
             // Chart data
@@ -187,6 +225,15 @@ class DashboardController extends Controller
                 'driver_performance' => [],
                 'weekly_trends' => [],
                 'on_time_delivery_rate' => 0,
+                'driver_utilization_rate' => 0,
+                'delivery_delay_rate' => 0,
+                'revenue_growth_rate' => 0,
+                'efficiency_index' => 0,
+                'delivery_volume_trend' => [
+                    'current' => 0,
+                    'previous' => 0,
+                    'growth' => 0
+                ],
             ],
             'deliveryChart' => [
                 'labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -277,7 +324,130 @@ class DashboardController extends Controller
         }
     }
 
-    // Keep existing methods
+    private function getDriverUtilizationRate()
+    {
+        try {
+            $totalDrivers = User::where('role', 'driver')->count();
+            
+            if ($totalDrivers === 0) {
+                return 0;
+            }
+
+            $activeDrivers = User::where('role', 'driver')
+                ->whereNotNull('last_location_update')
+                ->where('last_location_update', '>=', now()->subHour())
+                ->count();
+
+            return round(($activeDrivers / $totalDrivers) * 100, 2);
+        } catch (\Exception $e) {
+            Log::error('Error calculating driver utilization rate: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getDeliveryDelayRate()
+    {
+        try {
+            $totalDeliveries = Location::whereDate('created_at', '>=', now()->subDays(30))->count();
+            
+            if ($totalDeliveries === 0) {
+                return 0;
+            }
+
+            $overdueDeliveries = Location::whereNotNull('started_at')
+                ->whereNull('completed_at')
+                ->where('status', '!=', 'completed')
+                ->whereRaw('TIMESTAMPDIFF(MINUTE, started_at, NOW()) > 120')
+                ->whereDate('created_at', '>=', now()->subDays(30))
+                ->count();
+
+            return round(($overdueDeliveries / $totalDeliveries) * 100, 2);
+        } catch (\Exception $e) {
+            Log::error('Error calculating delivery delay rate: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getRevenueGrowthRate()
+    {
+        try {
+            $currentWeekRevenue = Location::where('status', 'completed')
+                ->where('payment_received', true)
+                ->whereBetween('completed_at', [now()->startOfWeek(), now()])
+                ->sum('payment_amount_received') ?? 0;
+
+            $previousWeekRevenue = Location::where('status', 'completed')
+                ->where('payment_received', true)
+                ->whereBetween('completed_at', [
+                    now()->subWeek()->startOfWeek(),
+                    now()->subWeek()->endOfWeek()
+                ])
+                ->sum('payment_amount_received') ?? 0;
+
+            if ($previousWeekRevenue === 0) {
+                return $currentWeekRevenue > 0 ? 100 : 0;
+            }
+
+            return round((($currentWeekRevenue - $previousWeekRevenue) / $previousWeekRevenue) * 100, 2);
+        } catch (\Exception $e) {
+            Log::error('Error calculating revenue growth rate: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getEfficiencyIndex()
+    {
+        try {
+            $completedDeliveries = Location::where('status', 'completed')
+                ->where('payment_received', true)
+                ->whereNotNull('started_at')
+                ->whereNotNull('completed_at')
+                ->whereDate('completed_at', '>=', now()->subDays(30))
+                ->get();
+
+            if ($completedDeliveries->isEmpty()) {
+                return 0;
+            }
+
+            $totalRevenue = $completedDeliveries->sum('payment_amount_received');
+            $totalMinutes = $completedDeliveries->sum(function ($delivery) {
+                return $delivery->started_at->diffInMinutes($delivery->completed_at);
+            });
+
+            return $totalMinutes > 0 ? round($totalRevenue / $totalMinutes, 2) : 0;
+        } catch (\Exception $e) {
+            Log::error('Error calculating efficiency index: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getDeliveryVolumeTrend()
+    {
+        try {
+            $currentWeekVolume = Location::where('status', 'completed')
+                ->whereBetween('completed_at', [now()->startOfWeek(), now()])
+                ->count();
+
+            $previousWeekVolume = Location::where('status', 'completed')
+                ->whereBetween('completed_at', [
+                    now()->subWeek()->startOfWeek(),
+                    now()->subWeek()->endOfWeek()
+                ])
+                ->count();
+
+            return [
+                'current' => $currentWeekVolume,
+                'previous' => $previousWeekVolume,
+                'growth' => $previousWeekVolume > 0 
+                    ? round((($currentWeekVolume - $previousWeekVolume) / $previousWeekVolume) * 100, 2)
+                    : ($currentWeekVolume > 0 ? 100 : 0)
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error calculating delivery volume trend: ' . $e->getMessage());
+            return ['current' => 0, 'previous' => 0, 'growth' => 0];
+        }
+    }
+
     private function getDeliverySuccessRate()
     {
         try {
@@ -399,13 +569,10 @@ class DashboardController extends Controller
             $completed = array_fill(0, 7, 0);
             $total = array_fill(0, 7, 0);
             $collections = array_fill(0, 7, 0);
-            $onTime = array_fill(0, 7, 0);
 
             $startOfWeek = now()->startOfWeek();
             for ($i = 0; $i < 7; $i++) {
                 $date = $startOfWeek->copy()->addDays($i);
-                
-                // Get basic delivery stats
                 $dayData = Location::whereDate('completed_at', $date)
                     ->selectRaw('COUNT(*) as total')
                     ->selectRaw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed')
@@ -415,46 +582,13 @@ class DashboardController extends Controller
                 $completed[$i] = $dayData->completed ?? 0;
                 $total[$i] = $dayData->total ?? 0;
                 $collections[$i] = $dayData->collections ?? 0;
-
-                // Calculate on-time deliveries for the day
-                $dayDeliveries = Location::whereDate('completed_at', $date)
-                    ->where('status', 'completed')
-                    ->whereNotNull('started_at')
-                    ->get();
-
-                $onTime[$i] = $dayDeliveries->filter(function ($location) {
-                    return $location->isOnTime();
-                })->count();
             }
-
-            // Calculate performance trends
-            $prevWeekStart = $startOfWeek->copy()->subWeek();
-            $prevWeekStats = Location::whereBetween('completed_at', [$prevWeekStart, $startOfWeek])
-                ->selectRaw('COUNT(*) as total_deliveries')
-                ->selectRaw('SUM(CASE WHEN payment_received = true THEN payment_amount_received ELSE 0 END) as total_revenue')
-                ->first();
-
-            $currentWeekStats = Location::whereBetween('completed_at', [$startOfWeek, now()])
-                ->selectRaw('COUNT(*) as total_deliveries')
-                ->selectRaw('SUM(CASE WHEN payment_received = true THEN payment_amount_received ELSE 0 END) as total_revenue')
-                ->first();
 
             return [
                 'labels' => $days,
                 'completed' => $completed,
                 'total' => $total,
                 'collections' => $collections,
-                'onTime' => $onTime,
-                'trends' => [
-                    'deliveries' => [
-                        'current' => $currentWeekStats->total_deliveries ?? 0,
-                        'previous' => $prevWeekStats->total_deliveries ?? 0,
-                    ],
-                    'revenue' => [
-                        'current' => $currentWeekStats->total_revenue ?? 0,
-                        'previous' => $prevWeekStats->total_revenue ?? 0,
-                    ]
-                ]
             ];
         } catch (\Exception $e) {
             Log::error('Error generating delivery chart data: ' . $e->getMessage());
@@ -499,9 +633,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get driver dashboard data
-     */
     public function driverDashboard()
     {
         try {
@@ -553,9 +684,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get driver's delivery success rate
-     */
     private function getDriverSuccessRate($driverId)
     {
         try {
@@ -579,9 +707,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get driver's average delivery time
-     */
     private function getDriverAverageTime($driverId)
     {
         try {
@@ -600,9 +725,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Get driver's on-time delivery rate
-     */
     private function getDriverOnTimeRate($driverId)
     {
         try {
