@@ -744,14 +744,36 @@ window.chartData = {
             borderColor: 'rgb(139, 92, 246)',
             backgroundColor: 'rgba(139, 92, 246, 0.1)',
             borderWidth: 2,
-            tension: 0.4
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: 'white',
+            pointBorderColor: 'rgb(139, 92, 246)',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderJoinStyle: 'round',
+            spanGaps: true,
+            segment: {
+                borderColor: ctx => ctx.p0.parsed.y === 0 && ctx.p1.parsed.y === 0 ? 'transparent' : undefined
+            }
         }, {
             label: 'Total Deliveries',
             data: {!! json_encode($deliveryChart['total']) !!},
             borderColor: 'rgb(59, 130, 246)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             borderWidth: 2,
-            tension: 0.4
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: 'white',
+            pointBorderColor: 'rgb(59, 130, 246)',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderJoinStyle: 'round',
+            spanGaps: true,
+            segment: {
+                borderColor: ctx => ctx.p0.parsed.y === 0 && ctx.p1.parsed.y === 0 ? 'transparent' : undefined
+            }
         }]
     },
     collections: {
@@ -762,7 +784,18 @@ window.chartData = {
             borderColor: 'rgb(16, 185, 129)',
             backgroundColor: 'rgba(16, 185, 129, 0.1)',
             borderWidth: 2,
-            tension: 0.4
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: 'white',
+            pointBorderColor: 'rgb(16, 185, 129)',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderJoinStyle: 'round',
+            spanGaps: true,
+            segment: {
+                borderColor: ctx => ctx.p0.parsed.y === 0 && ctx.p1.parsed.y === 0 ? 'transparent' : undefined
+            }
         }]
     }
 };
@@ -983,45 +1016,27 @@ function updateMetricValue(metric, value, suffix = '', prefix = '') {
             if (currentChart && data.deliveryChart) {
                 const activeView = document.querySelector('[data-view].active')?.dataset.view;
                 if (activeView) {
-                    window.chartData[activeView] = {
-                        labels: data.deliveryChart.labels || [],
-                        datasets: activeView === 'deliveries' ? [
-                            {
-                                label: 'Completed Deliveries',
-                                data: data.deliveryChart.completed || [],
-                                borderColor: 'rgb(139, 92, 246)',
-                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                                borderWidth: 2,
-                                tension: 0.4
-                            },
-                            {
-                                label: 'Total Deliveries',
-                                data: data.deliveryChart.total || [],
-                                borderColor: 'rgb(59, 130, 246)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                borderWidth: 2,
-                                tension: 0.4
-                            }
-                        ] : [
-                            {
-                                label: 'Collections (₵)',
-                                data: data.deliveryChart.collections || [],
-                                borderColor: 'rgb(16, 185, 129)',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                borderWidth: 2,
-                                tension: 0.4
-                            }
-                        ]
-                    };
-                    
-                    if (currentChart) {
-                        currentChart.destroy();
+                    // Update data while preserving chart configuration
+                    currentChart.data.labels = data.deliveryChart.labels || [];
+                    if (activeView === 'deliveries') {
+                        currentChart.data.datasets[0].data = data.deliveryChart.completed || [];
+                        currentChart.data.datasets[1].data = data.deliveryChart.total || [];
+                    } else {
+                        currentChart.data.datasets[0].data = data.deliveryChart.collections || [];
                     }
-                    initChart(activeView);
+                    currentChart.update('active');
                 }
             }
         } catch (error) {
             console.error('Error updating chart data:', error);
+            // If update fails, reinitialize the chart
+            if (currentChart) {
+                currentChart.destroy();
+                const activeView = document.querySelector('[data-view].active')?.dataset.view;
+                if (activeView) {
+                    initChart(activeView);
+                }
+            }
         }
     }
 
@@ -1082,6 +1097,10 @@ function initChart(view) {
             type: 'line',
             data: window.chartData[view],
             options: {
+                animation: {
+                    duration: 750,
+                    easing: 'easeInOutQuart'
+                },
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: {
@@ -1101,10 +1120,22 @@ function initChart(view) {
                         position: 'top',
                         labels: {
                             usePointStyle: true,
-                            padding: 20
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
                         }
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        titleFont: {
+                            size: 13
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        padding: 12,
+                        cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
@@ -1124,20 +1155,79 @@ function initChart(view) {
                 scales: {
                     x: {
                         grid: {
-                            display: false
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            color: '#64748b'
                         }
                     },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(226, 232, 240, 0.5)'
+                        },
                         ticks: {
+                            font: {
+                                size: 11
+                            },
+                            color: '#64748b',
+                            padding: 8,
                             callback: function(value) {
                                 if (view === 'collections') {
                                     return '₵' + value.toLocaleString();
                                 }
                                 return value.toLocaleString();
                             }
+                        },
+                        min: 0,
+                        suggestedMax: function(context) {
+                            const values = context.chart.data.datasets.reduce((acc, dataset) => {
+                                return acc.concat(dataset.data);
+                            }, []);
+                            const max = Math.max(...values);
+                            return max + (max * 0.1); // Add 10% padding
                         }
                     }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4,
+                        borderWidth: 2,
+                        fill: true,
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) {
+                                return null;
+                            }
+                            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                            if (context.datasetIndex === 0) {
+                                gradient.addColorStop(0, 'rgba(139, 92, 246, 0.2)');
+                                gradient.addColorStop(1, 'rgba(139, 92, 246, 0)');
+                            } else if (context.datasetIndex === 1) {
+                                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+                                gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                            } else {
+                                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+                                gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                            }
+                            return gradient;
+                        }
+                    },
+                    point: {
+                        radius: 3,
+                        hoverRadius: 5,
+                        backgroundColor: 'white',
+                        borderWidth: 2
+                    }
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: false
                 }
             }
         });
@@ -1258,15 +1348,40 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Refresh buttons
-        document.getElementById('refreshChart')?.addEventListener('click', function() {
+        // Refresh chart button
+        document.getElementById('refreshChart')?.addEventListener('click', async function() {
+            const button = this;
+            const icon = button.querySelector('.mdi-refresh');
+            
             try {
-                const activeView = document.querySelector('[data-view].active')?.dataset.view;
-                if (activeView) {
-                    initChart(activeView);
+                // Show loading state
+                button.disabled = true;
+                icon.classList.add('mdi-spin');
+                
+                const response = await fetch('/admin/dashboard/metrics');
+                const data = await response.json();
+                
+                if (data.success && data.data.deliveryChart) {
+                    const activeView = document.querySelector('[data-view].active')?.dataset.view;
+                    if (activeView) {
+                        // Update chart data
+                        // Update data while preserving styling
+                        if (activeView === 'deliveries') {
+                            currentChart.data.datasets[0].data = data.data.deliveryChart.completed;
+                            currentChart.data.datasets[1].data = data.data.deliveryChart.total;
+                        } else {
+                            currentChart.data.datasets[0].data = data.data.deliveryChart.collections;
+                        }
+                        currentChart.data.labels = data.data.deliveryChart.labels;
+                        currentChart.update('active');
+                    }
                 }
             } catch (error) {
                 console.error('Error refreshing chart:', error);
+            } finally {
+                // Reset loading state
+                button.disabled = false;
+                icon.classList.remove('mdi-spin');
             }
         });
         
