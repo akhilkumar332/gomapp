@@ -82,11 +82,21 @@ class DashboardController extends Controller
             // Enhanced delivery chart data with weekly comparison
             $deliveryChart = $this->getDeliveryChartData();
 
+            // Get business insights
+            $businessInsights = [
+                'topZones' => $this->getTopPerformingZones(),
+                'customerSatisfaction' => $this->getCustomerSatisfactionMetrics(),
+                'businessHealth' => $this->getBusinessHealthMetrics()
+            ];
+
             // Combine all data
             $data = array_merge($basicMetrics, [
                 'recentActivities' => $recentActivities,
                 'performanceMetrics' => $performanceMetrics,
                 'deliveryChart' => $deliveryChart,
+                'topZones' => $businessInsights['topZones'],
+                'customerSatisfaction' => $businessInsights['customerSatisfaction'],
+                'businessHealth' => $businessInsights['businessHealth']
             ]);
 
             return view('admin.dashboard_fixed', $data);
@@ -178,6 +188,13 @@ class DashboardController extends Controller
                 'delivery_volume_trend' => $this->getDeliveryVolumeTrend(),
             ];
 
+            // Business Insights
+            $businessInsights = [
+                'topZones' => $this->getTopPerformingZones(),
+                'customerSatisfaction' => $this->getCustomerSatisfactionMetrics(),
+                'businessHealth' => $this->getBusinessHealthMetrics()
+            ];
+
             // Chart data
             $deliveryChart = $this->getDeliveryChartData();
 
@@ -187,6 +204,7 @@ class DashboardController extends Controller
                     'basicMetrics' => $basicMetrics,
                     'recentActivities' => $recentActivities,
                     'performanceMetrics' => $performanceMetrics,
+                    'businessInsights' => $businessInsights,
                     'deliveryChart' => $deliveryChart,
                     'last_updated' => now()->toIso8601String()
                 ]
@@ -241,6 +259,19 @@ class DashboardController extends Controller
                 'total' => array_fill(0, 7, 0),
                 'collections' => array_fill(0, 7, 0),
             ],
+            // Business Insights fallback data
+            'topZones' => collect(),
+            'customerSatisfaction' => [
+                'rating' => 0,
+                'positive' => 0,
+                'neutral' => 0,
+                'negative' => 0
+            ],
+            'businessHealth' => [
+                'retention_rate' => 0,
+                'driver_availability' => 0,
+                'system_uptime' => 0
+            ]
         ];
     }
 
@@ -747,6 +778,150 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             Log::error('Error calculating driver on-time rate: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get top performing zones based on delivery volume and revenue
+     */
+    private function getTopPerformingZones()
+    {
+        try {
+            return Zone::with(['locations' => function ($query) {
+                $query->where('status', 'completed')
+                    ->where('payment_received', true)
+                    ->whereDate('completed_at', '>=', now()->subDays(30));
+            }])
+            ->get()
+            ->map(function ($zone) {
+                $currentRevenue = $zone->locations->sum('payment_amount_received');
+                
+                // Calculate previous period revenue
+                $previousRevenue = Location::where('zone_id', $zone->id)
+                    ->where('status', 'completed')
+                    ->where('payment_received', true)
+                    ->whereBetween('completed_at', [
+                        now()->subDays(60),
+                        now()->subDays(30)
+                    ])
+                    ->sum('payment_amount_received');
+
+                // Calculate growth
+                $growth = $previousRevenue > 0 
+                    ? round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 2)
+                    : ($currentRevenue > 0 ? 100 : 0);
+
+                return [
+                    'name' => $zone->name,
+                    'deliveries' => $zone->locations->count(),
+                    'revenue' => $currentRevenue,
+                    'growth' => $growth
+                ];
+            })
+            ->sortByDesc('revenue')
+            ->take(5)
+            ->values();
+        } catch (\Exception $e) {
+            Log::error('Error calculating top performing zones: ' . $e->getMessage());
+            return collect();
+        }
+    }
+
+    /**
+     * Get customer satisfaction metrics
+     */
+    private function getCustomerSatisfactionMetrics()
+    {
+        try {
+            $deliveries = Location::where('status', 'completed')
+                ->whereNotNull('customer_rating')
+                ->whereDate('completed_at', '>=', now()->subDays(30))
+                ->get();
+
+            if ($deliveries->isEmpty()) {
+                return [
+                    'rating' => 0,
+                    'positive' => 0,
+                    'neutral' => 0,
+                    'negative' => 0
+                ];
+            }
+
+            $totalRatings = $deliveries->count();
+            $averageRating = $deliveries->avg('customer_rating');
+
+            $positive = $deliveries->filter(fn($d) => $d->customer_rating >= 4)->count();
+            $neutral = $deliveries->filter(fn($d) => $d->customer_rating == 3)->count();
+            $negative = $deliveries->filter(fn($d) => $d->customer_rating <= 2)->count();
+
+            return [
+                'rating' => round($averageRating, 1),
+                'positive' => round(($positive / $totalRatings) * 100),
+                'neutral' => round(($neutral / $totalRatings) * 100),
+                'negative' => round(($negative / $totalRatings) * 100)
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error calculating customer satisfaction metrics: ' . $e->getMessage());
+            return [
+                'rating' => 0,
+                'positive' => 0,
+                'neutral' => 0,
+                'negative' => 0
+            ];
+        }
+    }
+
+    /**
+     * Get business health metrics
+     */
+    private function getBusinessHealthMetrics()
+    {
+        try {
+            // Calculate customer retention rate
+            $previousCustomers = Location::select('customer_id')
+                ->whereBetween('completed_at', [
+                    now()->subDays(60),
+                    now()->subDays(30)
+                ])
+                ->distinct()
+                ->get();
+
+            $retainedCustomers = Location::select('customer_id')
+                ->whereIn('customer_id', $previousCustomers->pluck('customer_id'))
+                ->whereDate('completed_at', '>=', now()->subDays(30))
+                ->distinct()
+                ->count();
+
+            $retentionRate = $previousCustomers->count() > 0
+                ? round(($retainedCustomers / $previousCustomers->count()) * 100, 2)
+                : 0;
+
+            // Calculate driver availability
+            $totalDrivers = User::where('role', 'driver')->count();
+            $availableDrivers = User::where('role', 'driver')
+                ->whereNotNull('last_location_update')
+                ->where('last_location_update', '>=', now()->subMinutes(30))
+                ->count();
+
+            $driverAvailability = $totalDrivers > 0
+                ? round(($availableDrivers / $totalDrivers) * 100, 2)
+                : 0;
+
+            // Calculate system uptime (mock data - replace with actual monitoring)
+            $systemUptime = 99.9;
+
+            return [
+                'retention_rate' => $retentionRate,
+                'driver_availability' => $driverAvailability,
+                'system_uptime' => $systemUptime
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error calculating business health metrics: ' . $e->getMessage());
+            return [
+                'retention_rate' => 0,
+                'driver_availability' => 0,
+                'system_uptime' => 0
+            ];
         }
     }
 }

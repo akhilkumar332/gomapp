@@ -165,6 +165,51 @@ h6 .tooltip-icon {
     text-align: center;
     border-radius: 0.5rem;
 }
+
+/* Business Insights Styles */
+.list-group-flush .list-group-item {
+    padding: 1rem;
+    border-left: none;
+    border-right: none;
+    transition: all 0.2s;
+}
+
+.list-group-flush .list-group-item:hover {
+    background-color: #F8FAFC;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.display-4 {
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--primary-color);
+}
+
+.progress {
+    background-color: #E2E8F0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Satisfaction colors */
+.text-success {
+    color: #10B981 !important;
+}
+
+.text-danger {
+    color: #EF4444 !important;
+}
+
+.text-primary {
+    color: #6366F1 !important;
+}
 </style>
 @endpush
 
@@ -573,6 +618,108 @@ h6 .tooltip-icon {
             </div>
         </div>
     </div>
+
+    <!-- Business Insights Section -->
+    <div class="row g-4 mb-4">
+        <!-- Top Performing Zones -->
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Top Performing Zones</h5>
+                    <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Zones with highest delivery volumes and revenue">i</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach(($topZones ?? []) as $zone)
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ $zone['name'] ?? 'Zone Name' }}</h6>
+                                    <small class="text-muted">{{ $zone['deliveries'] ?? 0 }} deliveries</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-primary">₵{{ number_format($zone['revenue'] ?? 0, 2) }}</div>
+                                    <small class="text-{{ ($zone['growth'] ?? 0) >= 0 ? 'success' : 'danger' }}">
+                                        {{ ($zone['growth'] ?? 0) >= 0 ? '+' : '' }}{{ $zone['growth'] ?? 0 }}%
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Satisfaction -->
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Customer Satisfaction</h5>
+                    <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Customer feedback and satisfaction metrics">i</span>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-4 mb-2">{{ number_format($customerSatisfaction['rating'] ?? 0, 1) }}</div>
+                        <div class="text-muted">Average Rating</div>
+                    </div>
+                    <div class="d-flex justify-content-around text-center">
+                        <div>
+                            <div class="h5 mb-0" data-satisfaction="positive">{{ $customerSatisfaction['positive'] ?? 0 }}%</div>
+                            <small class="text-success">Positive</small>
+                        </div>
+                        <div>
+                            <div class="h5 mb-0" data-satisfaction="neutral">{{ $customerSatisfaction['neutral'] ?? 0 }}%</div>
+                            <small class="text-muted">Neutral</small>
+                        </div>
+                        <div>
+                            <div class="h5 mb-0" data-satisfaction="negative">{{ $customerSatisfaction['negative'] ?? 0 }}%</div>
+                            <small class="text-danger">Negative</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Health -->
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Business Health</h5>
+                    <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Key business health indicators and trends">i</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="text-muted">Customer Retention</div>
+                            <div class="h6 mb-0" data-value="retention_rate">{{ $businessHealth['retention_rate'] ?? 0 }}%</div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" data-progress="retention_rate" style="width: {{ $businessHealth['retention_rate'] ?? 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="text-muted">Driver Availability</div>
+                            <div class="h6 mb-0" data-value="driver_availability">{{ $businessHealth['driver_availability'] ?? 0 }}%</div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-primary" role="progressbar" data-progress="driver_availability" style="width: {{ $businessHealth['driver_availability'] ?? 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="text-muted">System Uptime</div>
+                            <div class="h6 mb-0" data-value="system_uptime">{{ $businessHealth['system_uptime'] ?? 0 }}%</div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" role="progressbar" data-progress="system_uptime" style="width: {{ $businessHealth['system_uptime'] ?? 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -750,9 +897,61 @@ function updateMetrics(data) {
         
         // Update chart data
         updateChartData(data);
-        
+
+        // Update business insights
+        if (data.businessInsights) {
+            // Update top zones
+            if (data.businessInsights.topZones) {
+                const topZonesContainer = document.querySelector('.list-group-flush');
+                if (topZonesContainer) {
+                    topZonesContainer.innerHTML = data.businessInsights.topZones.map(zone => `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${zone.name || 'Zone Name'}</h6>
+                                    <small class="text-muted">${zone.deliveries || 0} deliveries</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-primary">₵${(zone.revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                                    <small class="text-${(zone.growth || 0) >= 0 ? 'success' : 'danger'}">
+                                        ${(zone.growth || 0) >= 0 ? '+' : ''}${zone.growth || 0}%
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Update customer satisfaction
+            if (data.businessInsights.customerSatisfaction) {
+                const cs = data.businessInsights.customerSatisfaction;
+                document.querySelector('.display-4').textContent = (cs.rating || 0).toFixed(1);
+                document.querySelector('[data-satisfaction="positive"]').textContent = `${cs.positive || 0}%`;
+                document.querySelector('[data-satisfaction="neutral"]').textContent = `${cs.neutral || 0}%`;
+                document.querySelector('[data-satisfaction="negative"]').textContent = `${cs.negative || 0}%`;
+            }
+
+            // Update business health
+            if (data.businessInsights.businessHealth) {
+                const bh = data.businessInsights.businessHealth;
+                updateProgressBar('retention_rate', bh.retention_rate);
+                updateProgressBar('driver_availability', bh.driver_availability);
+                updateProgressBar('system_uptime', bh.system_uptime);
+            }
+        }
     } catch (error) {
         console.error('Error updating metrics:', error);
+    }
+}
+
+// Helper function to update progress bars
+function updateProgressBar(metric, value) {
+    const progressBar = document.querySelector(`[data-progress="${metric}"]`);
+    const valueDisplay = document.querySelector(`[data-value="${metric}"]`);
+    if (progressBar && valueDisplay) {
+        progressBar.style.width = `${value || 0}%`;
+        valueDisplay.textContent = `${value || 0}%`;
     }
 }
 
