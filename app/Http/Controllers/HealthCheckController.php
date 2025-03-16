@@ -22,7 +22,8 @@ class HealthCheckController extends Controller
     {
         try {
             $checks = [
-                'database' => $this->checkDatabase(),
+            'mysql' => $this->checkDatabase('mysql'),
+            'sqlite' => $this->checkDatabase('sqlite'),
                 'cache' => $this->checkCache(),
                 'storage' => $this->checkStorage(),
                 'queue' => $this->checkQueue(),
