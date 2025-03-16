@@ -162,3 +162,14 @@ FIREBASE_MEASUREMENT_ID=
 ## License
 
 This project is licensed under the MIT License.
+
+## Additional Information
+
+### Composer Dependencies
+- Laravel Framework
+- Other dependencies as specified in `composer.json`
+
+### Controller Summaries
+- **SettingController**: Manages application settings and configurations.
+- **ProfileController**: Handles user profile-related actions.
+- **AppSettingController**: Manages application settings and their retrieval.
