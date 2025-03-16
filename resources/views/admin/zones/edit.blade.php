@@ -78,6 +78,19 @@
                         <div class="card bg-light">
                             <div class="card-body">
                                 <h6 class="card-title">Zone Information</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-map-marker text-primary me-2"></i>
+                                        Latitude: {{ $zone->center_lat }}
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-map-marker text-primary me-2"></i>
+                                        Longitude: {{ $zone->center_lng }}
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="mdi mdi-map-marker text-primary me-2"></i>
+                                        Radius: {{ $zone->radius }} km
+                                    </li>
                                 <p class="card-text text-muted">
                                     This zone currently has:
                                 </p>
@@ -86,9 +99,9 @@
                                         <i class="mdi mdi-map-marker text-primary me-2"></i>
                                         {{ $zone->locations_count }} Locations
                                     </li>
-                                    <li>
-                                        <i class="mdi mdi-account-multiple text-success me-2"></i>
-                                        {{ $zone->drivers_count }} Active Drivers
+<li>
+    <i class="mdi mdi-account-multiple text-success me-2"></i>
+    {{ $zone->getActiveDriversCountAttribute() }} Active Drivers
                                     </li>
                                 </ul>
                                 <hr>

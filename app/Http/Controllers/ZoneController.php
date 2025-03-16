@@ -9,7 +9,7 @@ class ZoneController extends Controller
 {
     public function index()
     {
-        $zones = Zone::withCount(['locations', 'drivers']) // Ensure drivers relationship is used
+        $zones = Zone::withCount(['locations', 'drivers', 'activeDrivers']) // Ensure active drivers relationship is used
             ->latest()
             ->paginate(10);
 

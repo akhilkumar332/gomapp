@@ -36,6 +36,18 @@
                             </td>
                         </tr>
                         <tr>
+                            <th>Latitude:</th>
+                            <td>{{ $zone->center_lat }}</td>
+                        </tr>
+                        <tr>
+                            <th>Longitude:</th>
+                            <td>{{ $zone->center_lng }}</td>
+                        </tr>
+                        <tr>
+                            <th>Radius:</th>
+                            <td>{{ $zone->radius }} km</td>
+                        </tr>
+                        <tr>
                             <th>Created At:</th>
                             <td>{{ $zone->created_at->format('M d, Y H:i A') }}</td>
                         </tr>
