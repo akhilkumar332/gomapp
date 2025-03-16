@@ -34,6 +34,33 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="center_lat" class="form-label">Center Latitude</label>
+                            <input type="text" class="form-control @error('center_lat') is-invalid @enderror" 
+                                   id="center_lat" name="center_lat" value="{{ old('center_lat') }}" required>
+                            @error('center_lat')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="center_lng" class="form-label">Center Longitude</label>
+                            <input type="text" class="form-control @error('center_lng') is-invalid @enderror" 
+                                   id="center_lng" name="center_lng" value="{{ old('center_lng') }}" required>
+                            @error('center_lng')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="radius" class="form-label">Radius (in kilometers)</label>
+                            <input type="number" class="form-control @error('radius') is-invalid @enderror" 
+                                   id="radius" name="radius" value="{{ old('radius') }}" required>
+                            @error('radius')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select @error('status') is-invalid @enderror" 
                                     id="status" name="status">

@@ -20,8 +20,10 @@ class Zone extends Model
     protected $fillable = [
         'name',
         'description',
-        'boundaries',
-        'status'
+        'status',
+        'center_lat',
+        'center_lng',
+        'radius'
     ];
 
     /**
@@ -31,7 +33,9 @@ class Zone extends Model
      */
     protected $casts = [
         'status' => 'string',
-        'boundaries' => 'json'
+        'center_lat' => 'decimal:8',
+        'center_lng' => 'decimal:8',
+        'radius' => 'integer',
     ];
 
     /**

@@ -9,7 +9,7 @@ class ZoneController extends Controller
 {
     public function index()
     {
-        $zones = Zone::withCount(['locations', 'drivers'])
+        $zones = Zone::withCount(['locations', 'drivers']) // Ensure drivers relationship is used
             ->latest()
             ->paginate(10);
 
@@ -26,7 +26,9 @@ class ZoneController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'boundaries' => 'required|json',
+            'center_lat' => 'required|numeric',
+            'center_lng' => 'required|numeric',
+            'radius' => 'required|integer',
             'status' => 'required|in:active,inactive',
         ]);
 
@@ -53,7 +55,9 @@ class ZoneController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'boundaries' => 'required|json',
+            'center_lat' => 'required|numeric',
+            'center_lng' => 'required|numeric',
+            'radius' => 'required|integer',
             'status' => 'required|in:active,inactive',
         ]);
 
