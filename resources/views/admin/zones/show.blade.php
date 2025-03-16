@@ -71,7 +71,7 @@
                                             <i class="mdi mdi-account-multiple text-success" style="font-size: 24px;"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h3 class="mb-1">{{ $zone->drivers_count }}</h3>
+                                            <h3 class="mb-1">{{ $zone->getActiveDriversCountAttribute() }}</h3>
                                             <p class="text-muted mb-0">Active Drivers</p>
                                         </div>
                                     </div>
@@ -98,7 +98,7 @@
                         <tbody>
                             @foreach($zone->locations as $location)
                             <tr>
-                                <td>{{ $location->name }}</td>
+                                <td>{{ $location->shop_name }}</td>
                                 <td>{{ $location->address }}</td>
                                 <td>
                                     <span class="badge {{ $location->status === 'active' ? 'bg-success' : 'bg-danger' }}">
@@ -135,7 +135,7 @@
                             @foreach($zone->drivers as $driver)
                             <tr>
                                 <td>{{ $driver->name }}</td>
-                                <td>{{ $driver->phone }}</td>
+                                <td>{{ $driver->formatted_phone }}</td>
                                 <td>
                                     <span class="badge {{ $driver->status === 'active' ? 'bg-success' : 'bg-danger' }}">
                                         {{ ucfirst($driver->status) }}
