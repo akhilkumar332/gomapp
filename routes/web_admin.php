@@ -12,8 +12,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentController;
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Admin Web Routes
@@ -91,6 +89,7 @@ Route::prefix('payments')->name('payments.')->group(function () {
     Route::get('/{id}/edit', [PaymentController::class, 'edit'])->name('edit');
     Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
     Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
+    Route::get('/export', [PaymentController::class, 'export'])->name('export');
 });
 
 // Activity Logs
