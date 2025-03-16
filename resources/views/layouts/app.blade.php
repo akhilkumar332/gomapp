@@ -35,28 +35,7 @@
     <!-- Custom JavaScript -->
     <script src="{{ asset('js/app.js') }}"></script>
 
-    <style>
-        [x-cloak] { display: none !important; }
-        .table-scroll-indicator {
-            height: 2px;
-            background-color: #e2e8f0;
-            position: relative;
-        }
-        .table-scroll-indicator::after {
-            content: '';
-            position: absolute;
-            height: 100%;
-            background-color: #4723D9;
-            width: 0;
-            transition: width 0.2s ease;
-        }
-        .toast-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 9999;
-        }
-    </style>
+    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-100">

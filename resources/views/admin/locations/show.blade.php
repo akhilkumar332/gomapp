@@ -69,7 +69,7 @@
                                             <i class="mdi mdi-truck-delivery text-primary" style="font-size: 24px;"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h3 class="mb-1">{{ $location->deliveries_count ?? 0 }}</h3>
+                                            <h3 class="mb-1">{{ $location->getTotalDeliveriesCount() }}</h3>
                                             <p class="text-muted mb-0">Total Deliveries</p>
                                         </div>
                                     </div>
@@ -84,7 +84,7 @@
                                             <i class="mdi mdi-currency-usd text-success" style="font-size: 24px;"></i>
                                         </div>
                                         <div class="flex-grow-1 ms-3">
-                                            <h3 class="mb-1">₵{{ number_format($location->total_collections ?? 0, 2) }}</h3>
+                                            <h3 class="mb-1">₵{{ number_format($location->payment_amount_received ?? 0, 2) }}</h3>
                                             <p class="text-muted mb-0">Total Collections</p>
                                         </div>
                                     </div>

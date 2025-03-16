@@ -1,0 +1,10 @@
+/* Custom styles for pagination icons */
+.pagination .page-link {
+    font-size: 0.85rem; /* Increased font size */
+}
+
+.pagination .page-link i {
+    width: 1em; /* Adjusted width */
+    height: 1em; /* Adjusted height */
+    font-size: 0.85rem; /* Increased icon size */
+}

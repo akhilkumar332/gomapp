@@ -92,6 +92,14 @@ class Location extends Model
     }
 
     /**
+     * Get the total number of completed deliveries for this location.
+     */
+    public function getTotalDeliveriesCount(): int
+    {
+        return $this->whereNotNull('completed_at')->count();
+    }
+
+    /**
      * Check if location delivery is completed
      */
     public function isCompleted(): bool
