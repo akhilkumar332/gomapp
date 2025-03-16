@@ -50,6 +50,10 @@ class DriverController extends Controller
             }
 
             $drivers = $query->latest()->paginate(10);
+            
+            // Fetch real-time metrics
+            $metricsResponse = app(DashboardController::class)->getMetricsData();
+            $metrics = $metricsResponse->getData()->data ?? []; // Ensure we handle the response correctly
 
             foreach ($drivers as $driver) {
                 $driver->performance = $this->calculateDriverPerformance($driver);
@@ -515,7 +519,7 @@ class DriverController extends Controller
 
             $onTimeDeliveries = $driver->completedLocations()
                 ->whereBetween('completed_at', [$startDate, $endDate])
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, completed_at) <= 2')
+                ->whereRaw('julianday(completed_at) - julianday(created_at) <= 2/24') // 2 hours threshold
                 ->count();
 
             $successRate = $totalAssignedLocations > 0 

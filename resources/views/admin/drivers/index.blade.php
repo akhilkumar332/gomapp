@@ -52,6 +52,12 @@
                 </div>
             </form>
 
+            <div id="metrics-display" class="mb-4">
+                <h5>Real-Time Metrics</h5>
+                <div id="metrics-content">
+                    <!-- Metrics will be dynamically updated here -->
+                </div>
+            </div>
             <div id="driver-list">
                 @include('admin.drivers.partials.driver-list')
             </div>
