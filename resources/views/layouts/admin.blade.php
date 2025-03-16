@@ -399,6 +399,13 @@
             </div>
 
             <div class="nav-item">
+                <a href="https://{{ request()->getHost() }}{{ route('admin.payments.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
+                    <i class="mdi mdi-currency-usd"></i>
+                    <span>Payments</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
                 <a href="https://{{ request()->getHost() }}{{ route('admin.reports.index', [], false) }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
                     <i class="mdi mdi-chart-bar"></i>
                     <span>Reports</span>

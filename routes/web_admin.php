@@ -8,14 +8,11 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ActivityLogController;
-
-// Dashboard Routes
-Route::prefix('dashboard')->group(function () {
-    Route::get('/metrics', [DashboardController::class, 'getMetricsData'])
-        ->name('admin.dashboard.metrics');
-});
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\PaymentController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +25,12 @@ use App\Http\Controllers\StatusController;
 | - name: 'admin.'
 |
 */
+
+// Dashboard Routes
+Route::prefix('dashboard')->group(function () {
+    Route::get('/metrics', [DashboardController::class, 'getMetricsData'])
+        ->name('admin.dashboard.metrics');
+});
 
 // Dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -78,6 +81,16 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::get('/', [SettingController::class, 'index'])->name('index');
     Route::post('/', [SettingController::class, 'update'])->name('update');
     Route::post('branding', [SettingController::class, 'updateBranding'])->name('branding');
+});
+
+// Payment
+Route::prefix('payments')->name('payments.')->group(function () {
+    Route::get('/', [PaymentController::class, 'index'])->name('index');
+    Route::get('/create', [PaymentController::class, 'create'])->name('create');
+    Route::post('/', [PaymentController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [PaymentController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [PaymentController::class, 'update'])->name('update');
+    Route::delete('/{id}', [PaymentController::class, 'destroy'])->name('destroy');
 });
 
 // Activity Logs
