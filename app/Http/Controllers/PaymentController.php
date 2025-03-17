@@ -46,7 +46,7 @@ class PaymentController extends Controller
             }
         }
 
-        $payments = $query->orderBy('created_at', 'desc')->paginate(10);
+        $payments = $query->orderBy('created_at', 'desc')->paginate(10); // Keep pagination for the index view
         $locations = Location::where('status', 'active')->get();
 
         return view('admin.payments.index', compact('payments', 'locations'));
