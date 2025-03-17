@@ -165,7 +165,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}" id="login-form">
+            <form method="POST" action="{{ secure_url('login') }}" id="login-form">
                 @csrf
 
                 <div class="mb-3">
